@@ -1,39 +1,40 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { InputManager, InputState } from '../../core/InputManager';
 
 // Mock canvas and DOM methods
 const mockCanvas = {
-  addEventListener: jest.fn(),
-  removeEventListener: jest.fn(),
-  requestPointerLock: jest.fn(),
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  requestPointerLock: vi.fn(),
   style: {},
 } as unknown as HTMLCanvasElement;
 
-// Use jest.spyOn instead of redefining global objects
-const mockAddEventListener = jest.fn();
-const mockRemoveEventListener = jest.fn();
+// Use vi.spyOn instead of redefining global objects
+const mockAddEventListener = vi.fn();
+const mockRemoveEventListener = vi.fn();
 
 describe('InputManager', () => {
   let inputManager: InputManager;
-  let documentSpy: jest.SpyInstance;
-  let navigatorSpy: jest.SpyInstance;
+  let documentSpy: any;
+  let navigatorSpy: any;
 
   beforeEach(() => {
     // Reset mocks
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     
     // Mock document methods
-    documentSpy = jest.spyOn(document, 'addEventListener').mockImplementation(mockAddEventListener);
-    jest.spyOn(document, 'removeEventListener').mockImplementation(mockRemoveEventListener);
+    documentSpy = vi.spyOn(document, 'addEventListener').mockImplementation(mockAddEventListener);
+    vi.spyOn(document, 'removeEventListener').mockImplementation(mockRemoveEventListener);
     
     // Mock exitPointerLock if it exists, or add it as a mock
     if ('exitPointerLock' in document) {
-      jest.spyOn(document, 'exitPointerLock' as any).mockImplementation(() => {});
+      vi.spyOn(document, 'exitPointerLock' as any).mockImplementation(() => {});
     } else {
-      (document as any).exitPointerLock = jest.fn();
+      (document as any).exitPointerLock = vi.fn();
     }
     
     // Mock navigator.getGamepads
-    navigatorSpy = jest.spyOn(navigator, 'getGamepads').mockReturnValue([null, null, null, null]);
+    navigatorSpy = vi.spyOn(navigator, 'getGamepads').mockReturnValue([null, null, null, null]);
     
     inputManager = new InputManager(mockCanvas);
   });

@@ -2,14 +2,15 @@
  * Comprehensive tests for SceneManager class
  * Tests 3D scene management, camera, lighting, and object management
  */
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SceneManager } from '../../core/SceneManager';
 import * as THREE from 'three';
 
 // Mock WebGLRenderer
 const mockRenderer = {
-  render: jest.fn(),
-  setSize: jest.fn(),
-  setPixelRatio: jest.fn(),
+  render: vi.fn(),
+  setSize: vi.fn(),
+  setPixelRatio: vi.fn(),
   shadowMap: { enabled: false, type: 'PCFSoftShadowMap' },
   outputColorSpace: 'srgb',
   toneMapping: 'ACESFilmicToneMapping',
@@ -128,7 +129,7 @@ describe('SceneManager', () => {
 
   describe('Scene Initialization', () => {
     it('should initialize scene with basic terrain', async () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation();
       
       await sceneManager.initialize();
       

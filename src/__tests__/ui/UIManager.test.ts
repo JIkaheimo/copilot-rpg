@@ -1,33 +1,34 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { UIManager } from '../../ui/UIManager';
 import { GameState } from '../../core/GameState';
 
-// Mock DOM methods using jest.spyOn
-const mockGetElementById = jest.fn();
-const mockAddEventListener = jest.fn();
-const mockRemoveEventListener = jest.fn();
-const mockCreateElement = jest.fn();
-const mockGetContext = jest.fn();
-const mockAppendChild = jest.fn();
+// Mock DOM methods using vi.spyOn
+const mockGetElementById = vi.fn();
+const mockAddEventListener = vi.fn();
+const mockRemoveEventListener = vi.fn();
+const mockCreateElement = vi.fn();
+const mockGetContext = vi.fn();
+const mockAppendChild = vi.fn();
 
 // Mock canvas context
 const mockCanvasContext = {
-  clearRect: jest.fn(),
-  fillRect: jest.fn(),
-  strokeRect: jest.fn(),
-  beginPath: jest.fn(),
-  arc: jest.fn(),
-  fill: jest.fn(),
-  stroke: jest.fn(),
-  fillText: jest.fn(),
-  measureText: jest.fn(() => ({ width: 50 })),
-  save: jest.fn(),
-  restore: jest.fn(),
-  translate: jest.fn(),
-  scale: jest.fn(),
-  rotate: jest.fn(),
-  moveTo: jest.fn(),
-  lineTo: jest.fn(),
-  setLineDash: jest.fn(),
+  clearRect: vi.fn(),
+  fillRect: vi.fn(),
+  strokeRect: vi.fn(),
+  beginPath: vi.fn(),
+  arc: vi.fn(),
+  fill: vi.fn(),
+  stroke: vi.fn(),
+  fillText: vi.fn(),
+  measureText: vi.fn(() => ({ width: 50 })),
+  save: vi.fn(),
+  restore: vi.fn(),
+  translate: vi.fn(),
+  scale: vi.fn(),
+  rotate: vi.fn(),
+  moveTo: vi.fn(),
+  lineTo: vi.fn(),
+  setLineDash: vi.fn(),
   strokeStyle: '#ffffff',
   fillStyle: '#ffffff',
   font: '12px Arial',
@@ -51,7 +52,7 @@ describe('UIManager', () => {
   let uiManager: UIManager;
   let gameState: GameState;
   let mockElements: { [key: string]: any };
-  let documentSpy: jest.SpyInstance;
+  let documentSpy: any;
 
   beforeEach(() => {
     uiManager = new UIManager();
@@ -78,8 +79,8 @@ describe('UIManager', () => {
     };
 
     // Mock document methods
-    documentSpy = jest.spyOn(document, 'getElementById').mockImplementation((id: string) => mockElements[id] || null);
-    jest.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
+    documentSpy = vi.spyOn(document, 'getElementById').mockImplementation((id: string) => mockElements[id] || null);
+    vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
       if (tagName === 'canvas') {
         return {
           ...createMockElement('canvas'),
@@ -90,8 +91,8 @@ describe('UIManager', () => {
       }
       return createMockElement(tagName);
     });
-    jest.spyOn(document, 'addEventListener').mockImplementation(mockAddEventListener);
-    jest.spyOn(document, 'removeEventListener').mockImplementation(mockRemoveEventListener);
+    vi.spyOn(document, 'addEventListener').mockImplementation(mockAddEventListener);
+    vi.spyOn(document, 'removeEventListener').mockImplementation(mockRemoveEventListener);
   });
 
   afterEach(() => {
@@ -104,7 +105,7 @@ describe('UIManager', () => {
     });
 
     it('should initialize with game state', () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation();
       
       uiManager.initialize(gameState);
       
@@ -366,7 +367,7 @@ describe('UIManager', () => {
     });
 
     it('should handle missing DOM elements', () => {
-      jest.spyOn(document, 'getElementById').mockReturnValue(null);
+      vi.spyOn(document, 'getElementById').mockReturnValue(null);
       
       expect(() => {
         uiManager.initialize(gameState);
@@ -375,7 +376,7 @@ describe('UIManager', () => {
     });
 
     it('should handle canvas creation failure', () => {
-      jest.spyOn(document, 'createElement').mockReturnValue(null);
+      vi.spyOn(document, 'createElement').mockReturnValue(null);
       
       expect(() => {
         uiManager.initialize(gameState);

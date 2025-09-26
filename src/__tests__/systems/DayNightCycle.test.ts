@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 /**
  * Comprehensive tests for DayNightCycle system
  * Tests time progression, lighting changes, and day/night cycle logic
@@ -27,7 +28,7 @@ describe('DayNightCycle', () => {
     });
 
     it('should initialize with scene and find existing lights', () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation();
       
       dayNightCycle.initialize(mockScene);
       

@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 /**
  * Comprehensive tests for GameState class
  * Tests state management, events, serialization, and game logic
@@ -248,7 +249,7 @@ describe('GameState', () => {
 
   describe('Event System', () => {
     it('should register and trigger event listeners', () => {
-      const mockCallback = jest.fn();
+      const mockCallback = vi.fn();
       
       gameState.on('healthChanged', mockCallback);
       gameState.takeDamage(10);
@@ -257,8 +258,8 @@ describe('GameState', () => {
     });
 
     it('should trigger multiple event listeners', () => {
-      const mockCallback1 = jest.fn();
-      const mockCallback2 = jest.fn();
+      const mockCallback1 = vi.fn();
+      const mockCallback2 = vi.fn();
       
       gameState.on('levelUp', mockCallback1);
       gameState.on('levelUp', mockCallback2);
@@ -269,7 +270,7 @@ describe('GameState', () => {
     });
 
     it('should remove event listeners', () => {
-      const mockCallback = jest.fn();
+      const mockCallback = vi.fn();
       
       gameState.on('itemAdded', mockCallback);
       gameState.off('itemAdded', mockCallback);

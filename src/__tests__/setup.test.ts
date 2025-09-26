@@ -1,8 +1,10 @@
 /**
- * Basic setup test to verify Jest configuration works
+ * Basic setup test to verify Vitest configuration works
  */
+import { describe, it, expect } from 'vitest';
+
 describe('Test Setup', () => {
-  it('should have jest working properly', () => {
+  it('should have vitest working properly', () => {
     expect(true).toBe(true);
   });
 

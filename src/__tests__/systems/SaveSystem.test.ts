@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 /**
  * Tests for SaveSystem class
  * Tests game persistence, save/load functionality
@@ -7,10 +8,10 @@ import { GameState } from '../../core/GameState';
 
 // Mock localStorage
 const mockLocalStorage = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
 };
 
 // Replace global localStorage with mock
@@ -25,7 +26,7 @@ describe('SaveSystem', () => {
   beforeEach(() => {
     saveSystem = new SaveSystem();
     gameState = new GameState();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Initialization', () => {

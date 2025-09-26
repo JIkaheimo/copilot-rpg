@@ -1,8 +1,9 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { WeatherSystem, WeatherType } from '../../systems/WeatherSystem';
 import * as THREE from 'three';
 
 // Mock Three.js
-jest.mock('three');
+vi.mock('three');
 
 describe('WeatherSystem', () => {
   let weatherSystem: WeatherSystem;
@@ -19,7 +20,7 @@ describe('WeatherSystem', () => {
     });
 
     it('should initialize with scene', () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation();
       
       weatherSystem.initialize(mockScene);
       
