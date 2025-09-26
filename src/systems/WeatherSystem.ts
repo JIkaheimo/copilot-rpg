@@ -170,18 +170,22 @@ export class WeatherSystem {
         switch (this.targetWeather) {
             case 'rain':
             case 'storm':
-                if (this.rainParticles) {
+                if (this.rainParticles && this.rainParticles.material) {
                     this.rainParticles.visible = true;
-                    (this.rainParticles.material as THREE.PointsMaterial).opacity = 
-                        0.7 * transitionProgress * this.weatherIntensity;
+                    const material = this.rainParticles.material as THREE.PointsMaterial;
+                    if (material && typeof material.opacity !== 'undefined') {
+                        material.opacity = 0.7 * transitionProgress * this.weatherIntensity;
+                    }
                 }
                 break;
                 
             case 'snow':
-                if (this.snowParticles) {
+                if (this.snowParticles && this.snowParticles.material) {
                     this.snowParticles.visible = true;
-                    (this.snowParticles.material as THREE.PointsMaterial).opacity = 
-                        0.8 * transitionProgress * this.weatherIntensity;
+                    const material = this.snowParticles.material as THREE.PointsMaterial;
+                    if (material && typeof material.opacity !== 'undefined') {
+                        material.opacity = 0.8 * transitionProgress * this.weatherIntensity;
+                    }
                 }
                 break;
                 

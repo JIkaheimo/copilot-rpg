@@ -102,6 +102,12 @@ export class InputManager {
         this.canvas.requestPointerLock();
     }
     
+    exitPointerLock(): void {
+        if (document.exitPointerLock) {
+            document.exitPointerLock();
+        }
+    }
+    
     private isGameKey(keyCode: string): boolean {
         const gameKeys = [
             'KeyW', 'KeyA', 'KeyS', 'KeyD', // Movement
@@ -121,8 +127,12 @@ export class InputManager {
         }
         
         // Update gamepad
-        const gamepads = navigator.getGamepads();
-        this.inputState.gamepad = gamepads[0] || null;
+        if (navigator && typeof navigator.getGamepads === 'function') {
+            const gamepads = navigator.getGamepads();
+            this.inputState.gamepad = gamepads[0] || null;
+        } else {
+            this.inputState.gamepad = null;
+        }
     }
     
     // Input query methods
@@ -148,6 +158,10 @@ export class InputManager {
         };
     }
     
+    getMouseState(): { x: number; y: number } {
+        return this.getMousePosition();
+    }
+    
     getGamepad(): Gamepad | null {
         return this.inputState.gamepad;
     }
@@ -158,5 +172,21 @@ export class InputManager {
     
     isPointerLocked(): boolean {
         return this.pointerLocked;
+    }
+    
+    cleanup(): void {
+        // Remove keyboard events
+        document.removeEventListener('keydown', this.onKeyDown.bind(this));
+        document.removeEventListener('keyup', this.onKeyUp.bind(this));
+        
+        // Remove mouse events
+        this.canvas.removeEventListener('mousemove', this.onMouseMove.bind(this));
+        this.canvas.removeEventListener('mousedown', this.onMouseDown.bind(this));
+        this.canvas.removeEventListener('mouseup', this.onMouseUp.bind(this));
+        this.canvas.removeEventListener('click', this.onCanvasClick.bind(this));
+        this.canvas.removeEventListener('contextmenu', (e) => e.preventDefault());
+        
+        // Remove pointer lock events
+        document.removeEventListener('pointerlockchange', this.onPointerLockChange.bind(this));
     }
 }

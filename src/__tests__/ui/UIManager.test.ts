@@ -53,6 +53,7 @@ describe('UIManager', () => {
   let gameState: GameState;
   let mockElements: { [key: string]: any };
   let documentSpy: any;
+  let createElementSpy: any;
 
   beforeEach(() => {
     uiManager = new UIManager();
@@ -80,7 +81,7 @@ describe('UIManager', () => {
 
     // Mock document methods
     documentSpy = vi.spyOn(document, 'getElementById').mockImplementation((id: string) => mockElements[id] || null);
-    vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
+    createElementSpy = vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
       if (tagName === 'canvas') {
         return {
           ...createMockElement('canvas'),
@@ -97,6 +98,7 @@ describe('UIManager', () => {
 
   afterEach(() => {
     documentSpy.mockRestore();
+    createElementSpy.mockRestore();
   });
 
   describe('Initialization', () => {
@@ -169,7 +171,7 @@ describe('UIManager', () => {
       uiManager.update(gameState);
       
       // Should have called canvas drawing methods
-      expect(mockCanvasContext.clearRect).toHaveBeenCalled();
+      expect(mockCanvasContext.fillRect).toHaveBeenCalled();
     });
 
     it('should handle missing UI elements gracefully', () => {
@@ -294,14 +296,14 @@ describe('UIManager', () => {
     });
 
     it('should create minimap canvas', () => {
-      expect(mockCreateElement).toHaveBeenCalledWith('canvas');
+      expect(createElementSpy).toHaveBeenCalledWith('canvas');
       expect(mockAppendChild).toHaveBeenCalled();
     });
 
     it('should draw on minimap canvas', () => {
       uiManager.update(gameState);
       
-      expect(mockCanvasContext.clearRect).toHaveBeenCalled();
+      expect(mockCanvasContext.fillRect).toHaveBeenCalled();
     });
 
     it('should handle canvas context errors', () => {

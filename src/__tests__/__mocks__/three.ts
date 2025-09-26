@@ -96,13 +96,6 @@ export class Vector3 {
     this.z += v.z * s;
     return this;
   }
-
-  set(x: number, y: number, z: number): this {
-    this.x = x;
-    this.y = y;
-    this.z = z;
-    return this;
-  }
 }
 
 export class Euler {

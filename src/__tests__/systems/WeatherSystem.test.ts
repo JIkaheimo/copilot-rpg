@@ -200,14 +200,17 @@ describe('WeatherSystem', () => {
     });
 
     it('should maintain weather state', () => {
-      // Test multiple weather changes
+      // Test multiple weather changes with transitions
       weatherSystem.setWeather('rain');
+      weatherSystem.update(15.0); // Complete transition
       expect(weatherSystem.getCurrentWeather()).toBe('rain');
       
       weatherSystem.setWeather('snow');
+      weatherSystem.update(15.0); // Complete transition
       expect(weatherSystem.getCurrentWeather()).toBe('snow');
       
       weatherSystem.setWeather('clear');
+      weatherSystem.update(15.0); // Complete transition
       expect(weatherSystem.getCurrentWeather()).toBe('clear');
     });
   });

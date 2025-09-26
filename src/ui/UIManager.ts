@@ -35,6 +35,8 @@ export class UIManager {
         
         // Create canvas for minimap
         this.minimapCanvas = document.createElement('canvas');
+        if (!this.minimapCanvas) return; // Handle creation failure
+        
         this.minimapCanvas.width = 196; // Container width - padding
         this.minimapCanvas.height = 196;
         this.minimapCanvas.style.width = '100%';
