@@ -1,0 +1,460 @@
+import * as THREE from 'three';
+
+export interface EnemyData {
+    id: string;
+    type: string;
+    name: string;
+    level: number;
+    health: number;
+    maxHealth: number;
+    attackPower: number;
+    defense: number;
+    experienceReward: number;
+    position: THREE.Vector3;
+    mesh?: THREE.Object3D;
+    patrolRadius: number;
+    detectionRange: number;
+    attackRange: number;
+    moveSpeed: number;
+    isHostile: boolean;
+    lastAttackTime: number;
+    state: 'idle' | 'patrolling' | 'chasing' | 'attacking' | 'dead';
+    target?: string;
+    homePosition: THREE.Vector3;
+}
+
+export class EnemySystem {
+    private initialized: boolean = false;
+    private scene: THREE.Scene | null = null;
+    private enemies: Map<string, EnemyData> = new Map();
+    private eventListeners: { [event: string]: Function[] } = {};
+    private nextEnemyId: number = 1;
+    
+    // Enemy type definitions
+    private enemyTypes = {
+        goblin: {
+            name: 'Goblin',
+            health: 30,
+            attackPower: 8,
+            defense: 2,
+            experienceReward: 15,
+            moveSpeed: 2.0,
+            detectionRange: 8.0,
+            attackRange: 1.5,
+            patrolRadius: 5.0,
+            color: 0x4a7c2a
+        },
+        wolf: {
+            name: 'Wolf',
+            health: 45,
+            attackPower: 12,
+            defense: 3,
+            experienceReward: 25,
+            moveSpeed: 3.5,
+            detectionRange: 10.0,
+            attackRange: 2.0,
+            patrolRadius: 8.0,
+            color: 0x8b4513
+        },
+        orc: {
+            name: 'Orc',
+            health: 80,
+            attackPower: 18,
+            defense: 6,
+            experienceReward: 40,
+            moveSpeed: 1.8,
+            detectionRange: 6.0,
+            attackRange: 2.5,
+            patrolRadius: 4.0,
+            color: 0x556b2f
+        },
+        skeleton: {
+            name: 'Skeleton',
+            health: 25,
+            attackPower: 10,
+            defense: 1,
+            experienceReward: 20,
+            moveSpeed: 2.2,
+            detectionRange: 12.0,
+            attackRange: 2.0,
+            patrolRadius: 6.0,
+            color: 0xdcdcdc
+        }
+    };
+    
+    initialize(scene: THREE.Scene): void {
+        this.scene = scene;
+        this.initialized = true;
+        
+        // Spawn some initial enemies for testing
+        this.spawnInitialEnemies();
+        
+        console.log('👹 Enemy system initialized');
+    }
+    
+    private spawnInitialEnemies(): void {
+        // Spawn a few enemies around the world for testing
+        this.spawnEnemy('goblin', new THREE.Vector3(10, 0, 10));
+        this.spawnEnemy('wolf', new THREE.Vector3(-15, 0, 5));
+        this.spawnEnemy('goblin', new THREE.Vector3(5, 0, -12));
+        this.spawnEnemy('skeleton', new THREE.Vector3(-8, 0, -8));
+    }
+    
+    spawnEnemy(type: keyof typeof this.enemyTypes, position: THREE.Vector3, level: number = 1): string {
+        if (!this.initialized || !this.scene) return '';
+        
+        const enemyType = this.enemyTypes[type];
+        if (!enemyType) {
+            console.warn(`Unknown enemy type: ${type}`);
+            return '';
+        }
+        
+        const enemyId = `enemy_${this.nextEnemyId++}`;
+        
+        // Scale stats by level
+        const levelMultiplier = 1 + (level - 1) * 0.2;
+        
+        const enemy: EnemyData = {
+            id: enemyId,
+            type,
+            name: enemyType.name,
+            level,
+            health: Math.floor(enemyType.health * levelMultiplier),
+            maxHealth: Math.floor(enemyType.health * levelMultiplier),
+            attackPower: Math.floor(enemyType.attackPower * levelMultiplier),
+            defense: Math.floor(enemyType.defense * levelMultiplier),
+            experienceReward: Math.floor(enemyType.experienceReward * levelMultiplier),
+            position: position.clone(),
+            homePosition: position.clone(),
+            patrolRadius: enemyType.patrolRadius,
+            detectionRange: enemyType.detectionRange,
+            attackRange: enemyType.attackRange,
+            moveSpeed: enemyType.moveSpeed,
+            isHostile: true,
+            lastAttackTime: 0,
+            state: 'idle'
+        };
+        
+        // Create visual representation
+        enemy.mesh = this.createEnemyMesh(enemyType, level);
+        enemy.mesh.position.copy(position);
+        this.scene.add(enemy.mesh);
+        
+        this.enemies.set(enemyId, enemy);
+        
+        this.emit('enemySpawned', enemy);
+        
+        console.log(`👹 Spawned ${enemy.name} (Level ${level}) at position`, position);
+        
+        return enemyId;
+    }
+    
+    private createEnemyMesh(enemyType: any, level: number): THREE.Object3D {
+        const group = new THREE.Group();
+        
+        // Main body
+        const bodyGeometry = new THREE.CapsuleGeometry(0.3, 1.2, 4, 8);
+        const bodyMaterial = new THREE.MeshLambertMaterial({ 
+            color: enemyType.color 
+        });
+        const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+        body.position.y = 0.6;
+        group.add(body);
+        
+        // Level indicator (small sphere on top)
+        if (level > 1) {
+            const levelGeometry = new THREE.SphereGeometry(0.1, 6, 6);
+            const levelMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0xffff00 
+            });
+            const levelIndicator = new THREE.Mesh(levelGeometry, levelMaterial);
+            levelIndicator.position.y = 1.5;
+            group.add(levelIndicator);
+        }
+        
+        // Simple eyes
+        const eyeGeometry = new THREE.SphereGeometry(0.05, 4, 4);
+        const eyeMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        
+        const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+        leftEye.position.set(-0.1, 1.0, 0.25);
+        group.add(leftEye);
+        
+        const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+        rightEye.position.set(0.1, 1.0, 0.25);
+        group.add(rightEye);
+        
+        return group;
+    }
+    
+    update(deltaTime: number, playerPosition?: THREE.Vector3): void {
+        if (!this.initialized) return;
+        
+        for (const [, enemy] of this.enemies) {
+            this.updateEnemy(enemy, deltaTime, playerPosition);
+        }
+    }
+    
+    private updateEnemy(enemy: EnemyData, deltaTime: number, playerPosition?: THREE.Vector3): void {
+        if (enemy.state === 'dead') return;
+        
+        // Update attack cooldown
+        if (enemy.lastAttackTime > 0) {
+            enemy.lastAttackTime -= deltaTime;
+        }
+        
+        // AI State Machine
+        switch (enemy.state) {
+            case 'idle':
+                this.updateIdleState(enemy, deltaTime, playerPosition);
+                break;
+            case 'patrolling':
+                this.updatePatrollingState(enemy, deltaTime, playerPosition);
+                break;
+            case 'chasing':
+                this.updateChasingState(enemy, deltaTime, playerPosition);
+                break;
+            case 'attacking':
+                this.updateAttackingState(enemy, deltaTime, playerPosition);
+                break;
+        }
+        
+        // Update visual position
+        if (enemy.mesh) {
+            enemy.mesh.position.copy(enemy.position);
+            
+            // Face movement direction or player
+            if (playerPosition && enemy.state === 'chasing') {
+                const direction = new THREE.Vector3()
+                    .subVectors(playerPosition, enemy.position)
+                    .normalize();
+                enemy.mesh.lookAt(enemy.position.clone().add(direction));
+            }
+        }
+    }
+    
+    private updateIdleState(enemy: EnemyData, deltaTime: number, playerPosition?: THREE.Vector3): void {
+        // Check if player is in detection range
+        if (playerPosition && enemy.isHostile) {
+            const distanceToPlayer = enemy.position.distanceTo(playerPosition);
+            if (distanceToPlayer <= enemy.detectionRange) {
+                enemy.state = 'chasing';
+                enemy.target = 'player';
+                this.emit('enemyDetectedPlayer', enemy);
+                return;
+            }
+        }
+        
+        // Randomly start patrolling
+        if (Math.random() < 0.3 * deltaTime) { // 30% chance per second
+            enemy.state = 'patrolling';
+        }
+    }
+    
+    private updatePatrollingState(enemy: EnemyData, deltaTime: number, playerPosition?: THREE.Vector3): void {
+        // Check if player is in detection range
+        if (playerPosition && enemy.isHostile) {
+            const distanceToPlayer = enemy.position.distanceTo(playerPosition);
+            if (distanceToPlayer <= enemy.detectionRange) {
+                enemy.state = 'chasing';
+                enemy.target = 'player';
+                this.emit('enemyDetectedPlayer', enemy);
+                return;
+            }
+        }
+        
+        // Move towards a random point within patrol radius
+        if (!enemy.target || Math.random() < 0.1 * deltaTime) {
+            const angle = Math.random() * Math.PI * 2;
+            const distance = Math.random() * enemy.patrolRadius;
+            const targetX = enemy.homePosition.x + Math.cos(angle) * distance;
+            const targetZ = enemy.homePosition.z + Math.sin(angle) * distance;
+            
+            const direction = new THREE.Vector3(targetX, 0, targetZ)
+                .sub(enemy.position)
+                .normalize();
+            
+            enemy.position.add(direction.multiplyScalar(enemy.moveSpeed * deltaTime));
+        }
+        
+        // Stop patrolling randomly
+        if (Math.random() < 0.2 * deltaTime) { // 20% chance per second
+            enemy.state = 'idle';
+        }
+    }
+    
+    private updateChasingState(enemy: EnemyData, deltaTime: number, playerPosition?: THREE.Vector3): void {
+        if (!playerPosition) {
+            enemy.state = 'idle';
+            enemy.target = undefined;
+            return;
+        }
+        
+        const distanceToPlayer = enemy.position.distanceTo(playerPosition);
+        
+        // If player is too far, stop chasing
+        if (distanceToPlayer > enemy.detectionRange * 1.5) {
+            enemy.state = 'idle';
+            enemy.target = undefined;
+            this.emit('enemyLostPlayer', enemy);
+            return;
+        }
+        
+        // If close enough to attack
+        if (distanceToPlayer <= enemy.attackRange) {
+            enemy.state = 'attacking';
+            return;
+        }
+        
+        // Move towards player
+        const direction = new THREE.Vector3()
+            .subVectors(playerPosition, enemy.position)
+            .normalize();
+        
+        enemy.position.add(direction.multiplyScalar(enemy.moveSpeed * deltaTime));
+    }
+    
+    private updateAttackingState(enemy: EnemyData, _deltaTime: number, playerPosition?: THREE.Vector3): void {
+        if (!playerPosition) {
+            enemy.state = 'idle';
+            enemy.target = undefined;
+            return;
+        }
+        
+        const distanceToPlayer = enemy.position.distanceTo(playerPosition);
+        
+        // If player moved out of attack range, chase again
+        if (distanceToPlayer > enemy.attackRange) {
+            enemy.state = 'chasing';
+            return;
+        }
+        
+        // Attack if cooldown is ready
+        if (enemy.lastAttackTime <= 0) {
+            this.performAttack(enemy);
+            enemy.lastAttackTime = 1.5; // 1.5 second cooldown
+        }
+    }
+    
+    private performAttack(enemy: EnemyData): void {
+        this.emit('enemyAttack', {
+            enemyId: enemy.id,
+            targetId: 'player',
+            damage: enemy.attackPower
+        });
+        
+        console.log(`👹 ${enemy.name} attacks for ${enemy.attackPower} damage!`);
+    }
+    
+    // Public methods
+    
+    damageEnemy(enemyId: string, damage: number): boolean {
+        const enemy = this.enemies.get(enemyId);
+        if (!enemy || enemy.state === 'dead') return false;
+        
+        enemy.health = Math.max(0, enemy.health - damage);
+        
+        this.emit('enemyDamaged', {
+            enemyId,
+            damage,
+            remainingHealth: enemy.health
+        });
+        
+        if (enemy.health <= 0) {
+            this.killEnemy(enemyId);
+            return true; // Enemy died
+        }
+        
+        return false; // Enemy survived
+    }
+    
+    private killEnemy(enemyId: string): void {
+        const enemy = this.enemies.get(enemyId);
+        if (!enemy) return;
+        
+        enemy.state = 'dead';
+        
+        // Remove visual representation
+        if (enemy.mesh && this.scene) {
+            this.scene.remove(enemy.mesh);
+        }
+        
+        this.emit('enemyKilled', {
+            enemyId,
+            enemy,
+            experienceReward: enemy.experienceReward
+        });
+        
+        console.log(`👹 ${enemy.name} has been defeated! (+${enemy.experienceReward} XP)`);
+        
+        // Remove from tracking after a delay (for any cleanup)
+        setTimeout(() => {
+            this.enemies.delete(enemyId);
+        }, 1000);
+    }
+    
+    getEnemy(enemyId: string): EnemyData | undefined {
+        return this.enemies.get(enemyId);
+    }
+    
+    getEnemiesInRange(position: THREE.Vector3, range: number): EnemyData[] {
+        const nearbyEnemies: EnemyData[] = [];
+        
+        for (const [, enemy] of this.enemies) {
+            if (enemy.state !== 'dead') {
+                const distance = position.distanceTo(enemy.position);
+                if (distance <= range) {
+                    nearbyEnemies.push(enemy);
+                }
+            }
+        }
+        
+        return nearbyEnemies;
+    }
+    
+    getAllEnemies(): EnemyData[] {
+        return Array.from(this.enemies.values()).filter(enemy => enemy.state !== 'dead');
+    }
+    
+    clearAllEnemies(): void {
+        for (const [, enemy] of this.enemies) {
+            if (enemy.mesh && this.scene) {
+                this.scene.remove(enemy.mesh);
+            }
+        }
+        this.enemies.clear();
+        console.log('👹 All enemies cleared');
+    }
+    
+    // Event system
+    on(event: string, callback: Function): void {
+        if (!this.eventListeners[event]) {
+            this.eventListeners[event] = [];
+        }
+        this.eventListeners[event].push(callback);
+    }
+    
+    off(event: string, callback: Function): void {
+        if (!this.eventListeners[event]) return;
+        
+        const index = this.eventListeners[event].indexOf(callback);
+        if (index > -1) {
+            this.eventListeners[event].splice(index, 1);
+        }
+    }
+    
+    private emit(event: string, data?: any): void {
+        if (!this.eventListeners[event]) return;
+        
+        this.eventListeners[event].forEach(callback => {
+            callback(data);
+        });
+    }
+    
+    cleanup(): void {
+        this.clearAllEnemies();
+        this.eventListeners = {};
+        this.initialized = false;
+        console.log('👹 Enemy system cleaned up');
+    }
+}

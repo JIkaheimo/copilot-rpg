@@ -124,13 +124,36 @@
             <div>Health: <span id="healthText">100/100</span></div>
             <div>Level: <span id="levelText">1</span></div>
             <div>XP: <span id="xpText">0/100</span></div>
+            <div id="combatInfo" style="margin-top: 10px; color: #ffcc00;">
+                <div>Enemies nearby: <span id="enemyCount">0</span></div>
+                <div id="attackCooldown" style="display: none;">Attack ready in: <span id="cooldownTime">0.0</span>s</div>
+            </div>
+            <div id="interactionInfo" style="margin-top: 10px; color: #00ff88;">
+                <div id="interactionPrompt" style="display: none;">Press E to interact with <span id="interactableName"></span></div>
+            </div>
         </div>
         
         <div id="minimap"></div>
         
         <div id="menu">
             <h2>Game Menu</h2>
-            <button onclick="game.toggleMenu()">Close</button>
+            <div style="margin: 20px 0;">
+                <p>Level: Level 1</p>
+                <p>Health: 100/100</p>
+                <p>Experience: 0/100</p>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button onclick="game.toggleMenu()" style="padding: 10px; background: #333; color: white; border: 1px solid #555; border-radius: 5px; cursor: pointer;">Resume Game</button>
+                <button onclick="game.saveGame()" style="padding: 10px; background: #333; color: white; border: 1px solid #555; border-radius: 5px; cursor: pointer;">Save Game</button>
+                <button onclick="game.loadGame()" style="padding: 10px; background: #333; color: white; border: 1px solid #555; border-radius: 5px; cursor: pointer;">Load Game</button>
+            </div>
+            <div style="margin-top: 20px; font-size: 14px; color: #aaa;">
+                <h3>Controls:</h3>
+                <p>WASD - Move | Shift - Run | Space - Jump</p>
+                <p>F Key or Left Click - Attack</p>
+                <p>E Key or Right Click - Interact</p>
+                <p>Mouse - Look around | ESC - Menu</p>
+            </div>
         </div>
     </div>
     
