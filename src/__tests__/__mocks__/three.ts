@@ -76,6 +76,31 @@ export class Vector3 {
   equals(v: Vector3): boolean {
     return this.x === v.x && this.y === v.y && this.z === v.z;
   }
+
+  crossVectors(a: Vector3, b: Vector3): this {
+    const ax = a.x, ay = a.y, az = a.z;
+    const bx = b.x, by = b.y, bz = b.z;
+    
+    this.x = ay * bz - az * by;
+    this.y = az * bx - ax * bz;
+    this.z = ax * by - ay * bx;
+    
+    return this;
+  }
+
+  addScaledVector(v: Vector3, s: number): this {
+    this.x += v.x * s;
+    this.y += v.y * s;
+    this.z += v.z * s;
+    return this;
+  }
+
+  set(x: number, y: number, z: number): this {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+    return this;
+  }
 }
 
 export class Euler {
@@ -151,6 +176,21 @@ export class PerspectiveCamera extends Object3D {
   updateProjectionMatrix(): void {
     // Mock implementation - no actual matrix calculations needed for testing
   }
+
+  lookAt(target: Vector3 | number, y?: number, z?: number): void {
+    // Mock implementation - just store the target for testing purposes
+    if (typeof target === 'number' && y !== undefined && z !== undefined) {
+      // Called with (x, y, z) parameters
+      return;
+    }
+    // Called with Vector3 parameter - no actual look-at calculations needed for testing
+  }
+
+  getWorldDirection(target: Vector3): Vector3 {
+    // Mock implementation - return a forward direction vector
+    target.set(0, 0, -1);
+    return target;
+  }
 }
 
 export class WebGLRenderer {
@@ -167,8 +207,25 @@ export class WebGLRenderer {
   render(_scene: Scene, _camera: PerspectiveCamera): void {}
 }
 
+export class BufferAttribute {
+  array: ArrayLike<number>;
+  itemSize: number;
+  
+  constructor(array: ArrayLike<number>, itemSize: number) {
+    this.array = array;
+    this.itemSize = itemSize;
+  }
+}
+
 export class Geometry {}
-export class BufferGeometry extends Geometry {}
+export class BufferGeometry extends Geometry {
+  attributes: { [name: string]: BufferAttribute } = {};
+  
+  setAttribute(name: string, attribute: BufferAttribute): this {
+    this.attributes[name] = attribute;
+    return this;
+  }
+}
 export class PlaneGeometry extends BufferGeometry {
   constructor(_width?: number, _height?: number) { super(); }
 }
@@ -193,6 +250,43 @@ export class MeshLambertMaterial extends Material {
     this.color = parameters?.color ?? 0xffffff;
   }
 }
+export class PointsMaterial extends Material {
+  opacity: number = 1;
+  transparent: boolean = false;
+  
+  constructor(parameters?: any) {
+    super();
+    if (parameters?.opacity !== undefined) {
+      this.opacity = parameters.opacity;
+    }
+    if (parameters?.transparent !== undefined) {
+      this.transparent = parameters.transparent;
+    }
+  }
+}
+
+export class Points extends Object3D {
+  geometry: BufferGeometry;
+  material: Material;
+  
+  constructor(geometry: BufferGeometry, material: Material) {
+    super();
+    this.geometry = geometry;
+    this.material = material;
+  }
+}
+
+export class Fog {
+  color: number;
+  near: number;
+  far: number;
+  
+  constructor(color: number, near: number, far: number) {
+    this.color = color;
+    this.near = near;
+    this.far = far;
+  }
+}
 
 export class Mesh extends Object3D {
   geometry: BufferGeometry;
@@ -208,26 +302,27 @@ export class Mesh extends Object3D {
 }
 
 export class Light extends Object3D {
-  color: number;
+  color: any;
   intensity: number;
 
   constructor(color?: number, intensity?: number) {
     super();
-    this.color = color ?? 0xffffff;
     this.intensity = intensity ?? 1;
+    // Create a proper color mock that supports setHex method
+    this.color = {
+      setHex: jest.fn((value: number) => {
+        this.color._value = value;
+        return this.color;
+      }),
+      _value: color ?? 0xffffff
+    };
   }
 }
 
 export class AmbientLight extends Light {
   constructor(color?: number, intensity?: number) {
     super(color, intensity);
-    // Add mock color methods with proper typing
-    this.color = {
-      setHex: jest.fn((value: number) => { 
-        (this.color as any) = value; 
-        return this.color;
-      })
-    } as any;
+    // Color mock is already set up in the base Light class
   }
 }
 
@@ -239,25 +334,7 @@ export class DirectionalLight extends Light {
 
   constructor(color?: number, intensity?: number) {
     super(color, intensity);
-    // Add mock color methods with proper typing
-    this.color = {
-      setHex: jest.fn((value: number) => { 
-        (this.color as any) = value; 
-        return this.color;
-      })
-    } as any;
-  }
-}
-
-export class Fog {
-  color: number;
-  near: number;
-  far: number;
-
-  constructor(color: number, near: number, far: number) {
-    this.color = color;
-    this.near = near;
-    this.far = far;
+    // Color mock is already set up in the base Light class
   }
 }
 
