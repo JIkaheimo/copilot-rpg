@@ -1,6 +1,11 @@
 // Vitest setup file for testing environment
 import { vi } from 'vitest';
 
+// Mock navigator.getGamepads for testing
+if (!('getGamepads' in navigator)) {
+  (navigator as any).getGamepads = vi.fn(() => [null, null, null, null]);
+}
+
 // Mock HTMLCanvasElement and WebGL context
 Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
   value: vi.fn(() => ({
