@@ -35,12 +35,9 @@ module.exports = {
     '^three$': '<rootDir>/src/__tests__/__mocks__/three.ts'
   },
   testTimeout: 10000,
-  // Node 18 compatibility fixes
   testEnvironmentOptions: {
     url: 'http://localhost'
   },
-  // Ensure proper handling of async operations in Node 18
   maxWorkers: 1,
-  // Fix potential memory issues in Node 18
   workerIdleMemoryLimit: '512MB'
 };

@@ -34,7 +34,7 @@ A comprehensive single-player 3D RPG built with TypeScript and Three.js, featuri
 ## Getting Started
 
 ### Prerequisites
-- Node.js (version 16 or higher)
+- Node.js (version 24 or higher)
 - npm or yarn package manager
 - Modern web browser with WebGL support
 
