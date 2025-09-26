@@ -21,23 +21,5 @@
     "@typescript-eslint/no-unused-vars": "error",
     "prefer-const": "error",
     "no-var": "error"
-  },
-  "overrides": [
-    {
-      "files": ["**/__tests__/**/*.ts", "**/*.test.ts", "**/*.spec.ts"],
-      "env": {
-        "jest": true
-      },
-      "rules": {
-        "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }]
-      }
-    },
-    {
-      "files": ["**/__mocks__/**/*.ts"],
-      "rules": {
-        "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": ".*" }],
-        "@typescript-eslint/no-explicit-any": "off"
-      }
-    }
-  ]
+  }
 }

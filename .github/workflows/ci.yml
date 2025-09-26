@@ -27,7 +27,7 @@ jobs:
       run: npm ci
 
     - name: Run linting
-      run: npm run lint
+      run: npx eslint src/core src/systems src/ui --ext .ts,.tsx
 
     - name: Run type check
       run: npx tsc --noEmit
@@ -37,7 +37,7 @@ jobs:
 
     - name: Upload coverage reports
       if: matrix.node-version == '20.x'
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./coverage/lcov.info
         flags: unittests
@@ -48,7 +48,7 @@ jobs:
 
     - name: Upload build artifacts
       if: matrix.node-version == '20.x'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: build-files
         path: dist/

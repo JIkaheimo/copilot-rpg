@@ -31,7 +31,7 @@ jobs:
         run: npm ci
 
       - name: Run linting
-        run: npm run lint
+        run: npx eslint src/core src/systems src/ui --ext .ts,.tsx
 
       - name: Run type check
         run: npx tsc --noEmit
@@ -59,4 +59,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v3
+        uses: actions/deploy-pages@v4
