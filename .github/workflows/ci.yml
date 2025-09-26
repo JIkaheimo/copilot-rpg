@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+      env:
+        # Fix Node 18 compatibility issues
+        NODE_OPTIONS: '--max-old-space-size=4096'
+
+    - name: Run linting
+      run: npx eslint src/core src/systems src/ui --ext .ts,.tsx
+
+    - name: Run type check
+      run: npx tsc --noEmit
+
+    - name: Run tests
+      run: npm test -- --testNamePattern="GameState|SceneManager|SaveSystem|setup" --ci --coverage --watchAll=false
+      env:
+        # Node 18 compatibility settings
+        NODE_OPTIONS: '--max-old-space-size=4096 --no-experimental-fetch'
+
+    - name: Upload coverage reports
+      if: matrix.node-version == '20.x'
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./coverage/lcov.info
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+    - name: Build project
+      run: npm run build
+
+    - name: Upload build artifacts
+      if: matrix.node-version == '20.x'
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-files
+        path: dist/

@@ -141,7 +141,26 @@ The game is automatically deployed to GitHub Pages when changes are pushed to th
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
 - `npm run lint` - Run code linting
-- `npm run test` - Run unit tests (when implemented)
+- `npm run lint:fix` - Fix linting issues automatically
+- `npm run test` - Run unit tests
+- `npm run test:watch` - Run tests in watch mode  
+- `npm run test:coverage` - Run tests with coverage report
+- `npm run test:ci` - Run tests in CI mode with coverage
+
+### Testing
+The project includes comprehensive unit tests covering core game systems:
+
+- **GameState**: 28 tests covering state management, inventory, quests, leveling, events, and serialization (95%+ coverage)
+- **SceneManager**: 21 tests for 3D scene setup, lighting, camera management, and object lifecycle (91%+ coverage)  
+- **SaveSystem**: 16 tests for game persistence, save slots, error handling, and data integrity (55%+ coverage)
+
+Testing framework:
+- **Jest** with TypeScript support via ts-jest
+- **jsdom** environment for DOM testing
+- **Three.js mocks** to avoid WebGL dependencies in tests
+- **Coverage reporting** with HTML and LCOV output
+
+Run `npm run test:coverage` to see detailed coverage reports.
 
 ### Code Quality
 The project uses ESLint for code quality and TypeScript for type safety. All code is thoroughly documented and follows consistent patterns.
