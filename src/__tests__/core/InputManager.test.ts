@@ -1,39 +1,45 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { InputManager, InputState } from '../../core/InputManager';
 
 // Mock canvas and DOM methods
 const mockCanvas = {
-  addEventListener: jest.fn(),
-  removeEventListener: jest.fn(),
-  requestPointerLock: jest.fn(),
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  requestPointerLock: vi.fn(),
   style: {},
 } as unknown as HTMLCanvasElement;
 
-// Use jest.spyOn instead of redefining global objects
-const mockAddEventListener = jest.fn();
-const mockRemoveEventListener = jest.fn();
+// Use vi.spyOn instead of redefining global objects
+const mockAddEventListener = vi.fn();
+const mockRemoveEventListener = vi.fn();
 
 describe('InputManager', () => {
   let inputManager: InputManager;
-  let documentSpy: jest.SpyInstance;
-  let navigatorSpy: jest.SpyInstance;
+  let documentSpy: any;
+  let navigatorSpy: any;
 
   beforeEach(() => {
     // Reset mocks
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     
     // Mock document methods
-    documentSpy = jest.spyOn(document, 'addEventListener').mockImplementation(mockAddEventListener);
-    jest.spyOn(document, 'removeEventListener').mockImplementation(mockRemoveEventListener);
+    documentSpy = vi.spyOn(document, 'addEventListener').mockImplementation(mockAddEventListener);
+    vi.spyOn(document, 'removeEventListener').mockImplementation(mockRemoveEventListener);
     
     // Mock exitPointerLock if it exists, or add it as a mock
     if ('exitPointerLock' in document) {
-      jest.spyOn(document, 'exitPointerLock' as any).mockImplementation(() => {});
+      vi.spyOn(document, 'exitPointerLock' as any).mockImplementation(() => {});
     } else {
-      (document as any).exitPointerLock = jest.fn();
+      (document as any).exitPointerLock = vi.fn();
     }
     
-    // Mock navigator.getGamepads
-    navigatorSpy = jest.spyOn(navigator, 'getGamepads').mockReturnValue([null, null, null, null]);
+    // Mock navigator.getGamepads - add the method if it doesn't exist
+    if ('getGamepads' in navigator) {
+      navigatorSpy = vi.spyOn(navigator, 'getGamepads').mockReturnValue([null, null, null, null]);
+    } else {
+      (navigator as any).getGamepads = vi.fn().mockReturnValue([null, null, null, null]);
+      navigatorSpy = navigator.getGamepads;
+    }
     
     inputManager = new InputManager(mockCanvas);
   });
@@ -152,7 +158,7 @@ describe('InputManager', () => {
       inputManager.exitPointerLock();
       
       // Check that exitPointerLock would be called (mocked)
-      expect(jest.spyOn(document, 'exitPointerLock')).toBeDefined();
+      expect(vi.spyOn(document, 'exitPointerLock')).toBeDefined();
     });
 
     it('should detect pointer lock state', () => {
@@ -195,7 +201,7 @@ describe('InputManager', () => {
         buttons: Array(16).fill({ pressed: false, touched: false, value: 0 }),
       } as Gamepad;
 
-      jest.spyOn(navigator, 'getGamepads').mockReturnValue([mockGamepad, null, null, null]);
+      vi.spyOn(navigator, 'getGamepads').mockReturnValue([mockGamepad, null, null, null]);
       
       inputManager.update();
       
@@ -215,11 +221,11 @@ describe('InputManager', () => {
         buttons: Array(16).fill({ pressed: false, touched: false, value: 0 }),
       } as Gamepad;
 
-      jest.spyOn(navigator, 'getGamepads').mockReturnValue([mockGamepad, null, null, null]);
+      vi.spyOn(navigator, 'getGamepads').mockReturnValue([mockGamepad, null, null, null]);
       inputManager.update();
       
       // Then disconnect it
-      jest.spyOn(navigator, 'getGamepads').mockReturnValue([null, null, null, null]);
+      vi.spyOn(navigator, 'getGamepads').mockReturnValue([null, null, null, null]);
       inputManager.update();
       
       const gamepad = inputManager.getGamepad();
@@ -277,7 +283,7 @@ describe('InputManager', () => {
     });
 
     it('should poll gamepad state on update', () => {
-      const getGamepadsSpy = jest.spyOn(navigator, 'getGamepads');
+      const getGamepadsSpy = vi.spyOn(navigator, 'getGamepads');
       
       inputManager.update();
       
@@ -361,8 +367,8 @@ describe('InputManager', () => {
     it('should handle pointer lock API not available', () => {
       const originalDocument = global.document;
       (global as any).document = {
-        addEventListener: jest.fn(),
-        removeEventListener: jest.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
       };
       
       expect(() => {

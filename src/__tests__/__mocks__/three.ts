@@ -1,4 +1,6 @@
 // Mock Three.js for testing
+import { vi } from 'vitest';
+
 export class Vector3 {
   x: number = 0;
   y: number = 0;
@@ -92,13 +94,6 @@ export class Vector3 {
     this.x += v.x * s;
     this.y += v.y * s;
     this.z += v.z * s;
-    return this;
-  }
-
-  set(x: number, y: number, z: number): this {
-    this.x = x;
-    this.y = y;
-    this.z = z;
     return this;
   }
 }
@@ -310,7 +305,7 @@ export class Light extends Object3D {
     this.intensity = intensity ?? 1;
     // Create a proper color mock that supports setHex method
     this.color = {
-      setHex: jest.fn((value: number) => {
+      setHex: vi.fn((value: number) => {
         this.color._value = value;
         return this.color;
       }),

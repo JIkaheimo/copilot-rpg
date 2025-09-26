@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach } from 'vitest';
 /**
  * Tests for PlayerController class
  * Tests player movement, physics, and camera controls

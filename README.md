@@ -155,7 +155,7 @@ The project includes comprehensive unit tests covering core game systems:
 - **SaveSystem**: 16 tests for game persistence, save slots, error handling, and data integrity (55%+ coverage)
 
 Testing framework:
-- **Jest** with TypeScript support via ts-jest
+- **Vitest** with TypeScript support and fast execution
 - **jsdom** environment for DOM testing
 - **Three.js mocks** to avoid WebGL dependencies in tests
 - **Coverage reporting** with HTML and LCOV output

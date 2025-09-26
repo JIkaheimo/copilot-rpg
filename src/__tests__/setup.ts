@@ -1,49 +1,54 @@
-// Jest setup file for testing environment
-import 'jest';
+// Vitest setup file for testing environment
+import { vi } from 'vitest';
+
+// Mock navigator.getGamepads for testing
+if (!('getGamepads' in navigator)) {
+  (navigator as any).getGamepads = vi.fn(() => [null, null, null, null]);
+}
 
 // Mock HTMLCanvasElement and WebGL context
 Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
-  value: jest.fn(() => ({
-    clearColor: jest.fn(),
-    clear: jest.fn(),
-    clearDepth: jest.fn(),
-    enable: jest.fn(),
-    disable: jest.fn(),
-    viewport: jest.fn(),
-    drawElements: jest.fn(),
-    drawArrays: jest.fn(),
-    createProgram: jest.fn(),
-    createShader: jest.fn(),
-    compileShader: jest.fn(),
-    linkProgram: jest.fn(),
-    useProgram: jest.fn(),
-    getAttribLocation: jest.fn(),
-    getUniformLocation: jest.fn(),
-    vertexAttribPointer: jest.fn(),
-    enableVertexAttribArray: jest.fn(),
-    uniform1f: jest.fn(),
-    uniform2f: jest.fn(),
-    uniform3f: jest.fn(),
-    uniform4f: jest.fn(),
-    uniformMatrix4fv: jest.fn(),
-    createBuffer: jest.fn(),
-    bindBuffer: jest.fn(),
-    bufferData: jest.fn(),
-    createTexture: jest.fn(),
-    bindTexture: jest.fn(),
-    texImage2D: jest.fn(),
-    texParameteri: jest.fn(),
-    generateMipmap: jest.fn(),
+  value: vi.fn(() => ({
+    clearColor: vi.fn(),
+    clear: vi.fn(),
+    clearDepth: vi.fn(),
+    enable: vi.fn(),
+    disable: vi.fn(),
+    viewport: vi.fn(),
+    drawElements: vi.fn(),
+    drawArrays: vi.fn(),
+    createProgram: vi.fn(),
+    createShader: vi.fn(),
+    compileShader: vi.fn(),
+    linkProgram: vi.fn(),
+    useProgram: vi.fn(),
+    getAttribLocation: vi.fn(),
+    getUniformLocation: vi.fn(),
+    vertexAttribPointer: vi.fn(),
+    enableVertexAttribArray: vi.fn(),
+    uniform1f: vi.fn(),
+    uniform2f: vi.fn(),
+    uniform3f: vi.fn(),
+    uniform4f: vi.fn(),
+    uniformMatrix4fv: vi.fn(),
+    createBuffer: vi.fn(),
+    bindBuffer: vi.fn(),
+    bufferData: vi.fn(),
+    createTexture: vi.fn(),
+    bindTexture: vi.fn(),
+    texImage2D: vi.fn(),
+    texParameteri: vi.fn(),
+    generateMipmap: vi.fn(),
   })),
 });
 
 // Mock requestAnimationFrame for testing
-global.requestAnimationFrame = jest.fn((cb) => setTimeout(cb, 16));
-global.cancelAnimationFrame = jest.fn();
+global.requestAnimationFrame = vi.fn((cb) => setTimeout(cb, 16));
+global.cancelAnimationFrame = vi.fn();
 
 // Mock btoa/atob for save system
-global.btoa = jest.fn((str) => Buffer.from(str).toString('base64'));
-global.atob = jest.fn((str) => Buffer.from(str, 'base64').toString());
+global.btoa = vi.fn((str) => Buffer.from(str).toString('base64'));
+global.atob = vi.fn((str) => Buffer.from(str, 'base64').toString());
 
 // Mock window methods
 Object.defineProperty(window, 'innerWidth', {
@@ -60,10 +65,10 @@ Object.defineProperty(window, 'innerHeight', {
 
 // Mock localStorage
 const localStorageMock = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
 };
 Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
@@ -73,10 +78,10 @@ Object.defineProperty(window, 'localStorage', {
 if (process.env.NODE_ENV === 'test') {
   global.console = {
     ...console,
-    log: jest.fn(),
-    debug: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
+    log: vi.fn(),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
   };
 }
