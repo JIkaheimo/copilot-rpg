@@ -61,7 +61,7 @@ export class Vector3 {
     return new Vector3(this.x, this.y, this.z);
   }
 
-  applyEuler(euler: Euler): this {
+  applyEuler(_euler: Euler): this {
     // Mock implementation - just return this for chaining
     return this;
   }
@@ -160,29 +160,29 @@ export class WebGLRenderer {
   toneMapping = 'ACESFilmicToneMapping';
   toneMappingExposure = 1.0;
 
-  constructor(parameters?: any) {}
+  constructor(_parameters?: any) {}
 
-  setSize(width: number, height: number): void {}
-  setPixelRatio(pixelRatio: number): void {}
-  render(scene: Scene, camera: PerspectiveCamera): void {}
+  setSize(_width: number, _height: number): void {}
+  setPixelRatio(_pixelRatio: number): void {}
+  render(_scene: Scene, _camera: PerspectiveCamera): void {}
 }
 
 export class Geometry {}
 export class BufferGeometry extends Geometry {}
 export class PlaneGeometry extends BufferGeometry {
-  constructor(width?: number, height?: number) { super(); }
+  constructor(_width?: number, _height?: number) { super(); }
 }
 export class CapsuleGeometry extends BufferGeometry {
-  constructor(radius?: number, height?: number) { super(); }
+  constructor(_radius?: number, _height?: number) { super(); }
 }
 export class SphereGeometry extends BufferGeometry {
-  constructor(radius?: number) { super(); }
+  constructor(_radius?: number) { super(); }
 }
 export class BoxGeometry extends BufferGeometry {
-  constructor(width?: number, height?: number, depth?: number) { super(); }
+  constructor(_width?: number, _height?: number, _depth?: number) { super(); }
 }
 export class CylinderGeometry extends BufferGeometry {
-  constructor(radiusTop?: number, radiusBottom?: number, height?: number) { super(); }
+  constructor(_radiusTop?: number, _radiusBottom?: number, _height?: number) { super(); }
 }
 
 export class Material {}
@@ -221,9 +221,12 @@ export class Light extends Object3D {
 export class AmbientLight extends Light {
   constructor(color?: number, intensity?: number) {
     super(color, intensity);
-    // Add mock color methods
+    // Add mock color methods with proper typing
     this.color = {
-      setHex: jest.fn((value) => { this.color = value; })
+      setHex: jest.fn((value: number) => { 
+        (this.color as any) = value; 
+        return this.color;
+      })
     } as any;
   }
 }
@@ -236,9 +239,12 @@ export class DirectionalLight extends Light {
 
   constructor(color?: number, intensity?: number) {
     super(color, intensity);
-    // Add mock color methods
+    // Add mock color methods with proper typing
     this.color = {
-      setHex: jest.fn((value) => { this.color = value; })
+      setHex: jest.fn((value: number) => { 
+        (this.color as any) = value; 
+        return this.color;
+      })
     } as any;
   }
 }

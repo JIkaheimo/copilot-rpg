@@ -192,8 +192,8 @@ describe('DayNightCycle', () => {
 
     it('should update lighting when time changes', () => {
       // Get initial light states
-      let directionalLight: THREE.DirectionalLight | null = null;
-      let ambientLight: THREE.AmbientLight | null = null;
+      let directionalLight: THREE.DirectionalLight | undefined;
+      let ambientLight: THREE.AmbientLight | undefined;
       
       mockScene.traverse((object) => {
         if (object instanceof THREE.DirectionalLight) directionalLight = object;
@@ -215,12 +215,10 @@ describe('DayNightCycle', () => {
     });
 
     it('should have different lighting for different time periods', () => {
-      let directionalLight: THREE.DirectionalLight | null = null;
-      let ambientLight: THREE.AmbientLight | null = null;
+      let directionalLight: THREE.DirectionalLight | undefined;
       
       mockScene.traverse((object) => {
         if (object instanceof THREE.DirectionalLight) directionalLight = object;
-        if (object instanceof THREE.AmbientLight) ambientLight = object;
       });
       
       // Day lighting
@@ -236,7 +234,7 @@ describe('DayNightCycle', () => {
     });
 
     it('should update sun position based on time', () => {
-      let directionalLight: THREE.DirectionalLight | null = null;
+      let directionalLight: THREE.DirectionalLight | undefined;
       
       mockScene.traverse((object) => {
         if (object instanceof THREE.DirectionalLight) directionalLight = object;
@@ -304,7 +302,7 @@ describe('DayNightCycle', () => {
       // Test transition from day to dusk
       dayNightCycle.setTimeOfDay(16.5); // Middle of day-to-dusk transition
       
-      let directionalLight: THREE.DirectionalLight | null = null;
+      let directionalLight: THREE.DirectionalLight | undefined;
       mockScene.traverse((object) => {
         if (object instanceof THREE.DirectionalLight) directionalLight = object;
       });
