@@ -37,7 +37,7 @@ jobs:
         run: npx tsc --noEmit
 
       - name: Run tests
-        run: npm test -- --testNamePattern="GameState|SceneManager|SaveSystem|setup" --ci --coverage --watchAll=false
+        run: npm run test:ci
 
       - name: Build project
         run: npm run build
