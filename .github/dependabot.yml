@@ -1,0 +1,40 @@
+version: 2
+updates:
+  # Enable version updates for npm
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "JIkaheimo"
+    assignees:
+      - "JIkaheimo"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    groups:
+      # Group TypeScript ESLint packages together
+      typescript-eslint:
+        patterns:
+          - "@typescript-eslint/*"
+      # Group testing dependencies
+      testing:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
+          - "jsdom"
+          - "happy-dom"
+      # Group Three.js related packages
+      threejs:
+        patterns:
+          - "three"
+          - "@types/three"
+    # Allow both security and version updates
+    allow:
+      - dependency-type: "all"
+    # Auto-merge patch and minor updates when CI passes
+    # This will be configured via GitHub settings/rules
