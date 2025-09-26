@@ -41,6 +41,10 @@ Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
 global.requestAnimationFrame = jest.fn((cb) => setTimeout(cb, 16));
 global.cancelAnimationFrame = jest.fn();
 
+// Mock btoa/atob for save system
+global.btoa = jest.fn((str) => Buffer.from(str).toString('base64'));
+global.atob = jest.fn((str) => Buffer.from(str, 'base64').toString());
+
 // Mock window methods
 Object.defineProperty(window, 'innerWidth', {
   writable: true,

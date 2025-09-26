@@ -60,6 +60,22 @@ export class Vector3 {
   clone(): Vector3 {
     return new Vector3(this.x, this.y, this.z);
   }
+
+  applyEuler(euler: Euler): this {
+    // Mock implementation - just return this for chaining
+    return this;
+  }
+
+  distanceTo(v: Vector3): number {
+    const dx = this.x - v.x;
+    const dy = this.y - v.y;
+    const dz = this.z - v.z;
+    return Math.sqrt(dx * dx + dy * dy + dz * dz);
+  }
+
+  equals(v: Vector3): boolean {
+    return this.x === v.x && this.y === v.y && this.z === v.z;
+  }
 }
 
 export class Euler {
@@ -73,6 +89,14 @@ export class Euler {
     this.y = y;
     this.z = z;
     this.order = order;
+  }
+
+  copy(euler: Euler): this {
+    this.x = euler.x;
+    this.y = euler.y;
+    this.z = euler.z;
+    this.order = euler.order;
+    return this;
   }
 }
 
