@@ -123,6 +123,10 @@ export class PerspectiveCamera extends Object3D {
     this.near = near;
     this.far = far;
   }
+
+  updateProjectionMatrix(): void {
+    // Mock implementation - no actual matrix calculations needed for testing
+  }
 }
 
 export class WebGLRenderer {
@@ -152,6 +156,9 @@ export class SphereGeometry extends BufferGeometry {
 }
 export class BoxGeometry extends BufferGeometry {
   constructor(width?: number, height?: number, depth?: number) { super(); }
+}
+export class CylinderGeometry extends BufferGeometry {
+  constructor(radiusTop?: number, radiusBottom?: number, height?: number) { super(); }
 }
 
 export class Material {}
@@ -190,6 +197,10 @@ export class Light extends Object3D {
 export class AmbientLight extends Light {
   constructor(color?: number, intensity?: number) {
     super(color, intensity);
+    // Add mock color methods
+    this.color = {
+      setHex: jest.fn((value) => { this.color = value; })
+    } as any;
   }
 }
 
@@ -201,6 +212,10 @@ export class DirectionalLight extends Light {
 
   constructor(color?: number, intensity?: number) {
     super(color, intensity);
+    // Add mock color methods
+    this.color = {
+      setHex: jest.fn((value) => { this.color = value; })
+    } as any;
   }
 }
 

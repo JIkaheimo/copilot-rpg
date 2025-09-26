@@ -244,6 +244,14 @@ export class GameState {
         this.emit('questAdded', quest);
     }
     
+    completeQuest(questId: string): void {
+        const quest = this.quests.find(q => q.id === questId);
+        if (!quest) return;
+        
+        quest.status = 'completed';
+        this.doCompleteQuest(quest);
+    }
+    
     updateQuestProgress(questId: string, objectiveId: string, progress: number): void {
         const quest = this.quests.find(q => q.id === questId);
         if (!quest) return;
@@ -257,13 +265,13 @@ export class GameState {
         // Check if quest is complete
         if (quest.objectives.every(o => o.completed)) {
             quest.status = 'completed';
-            this.completeQuest(quest);
+            this.doCompleteQuest(quest);
         }
         
         this.emit('questProgress', { questId, objectiveId, progress });
     }
     
-    private completeQuest(quest: Quest): void {
+    private doCompleteQuest(quest: Quest): void {
         // Award rewards
         this.addExperience(quest.rewards.experience);
         quest.rewards.items.forEach(item => this.addItem(item));
