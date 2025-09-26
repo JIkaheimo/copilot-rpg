@@ -11,7 +11,10 @@ module.exports = {
     '<rootDir>/src/__tests__/__mocks__/'
   ],
   transform: {
-    '^.+\\.(ts|tsx)$': 'ts-jest'
+    '^.+\\.(ts|tsx)$': ['ts-jest', {
+      useESM: false,
+      isolatedModules: false
+    }]
   },
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',
@@ -31,5 +34,13 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^three$': '<rootDir>/src/__tests__/__mocks__/three.ts'
   },
-  testTimeout: 10000
+  testTimeout: 10000,
+  // Node 18 compatibility fixes
+  testEnvironmentOptions: {
+    url: 'http://localhost'
+  },
+  // Ensure proper handling of async operations in Node 18
+  maxWorkers: 1,
+  // Fix potential memory issues in Node 18
+  workerIdleMemoryLimit: '512MB'
 };
