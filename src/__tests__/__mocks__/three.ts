@@ -1,0 +1,222 @@
+// Mock Three.js for testing
+export class Vector3 {
+  x: number = 0;
+  y: number = 0;
+  z: number = 0;
+
+  constructor(x = 0, y = 0, z = 0) {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+  }
+
+  set(x: number, y: number, z: number): this {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+    return this;
+  }
+
+  add(v: Vector3): this {
+    this.x += v.x;
+    this.y += v.y;
+    this.z += v.z;
+    return this;
+  }
+
+  multiply(v: Vector3): this {
+    this.x *= v.x;
+    this.y *= v.y;
+    this.z *= v.z;
+    return this;
+  }
+
+  multiplyScalar(scalar: number): this {
+    this.x *= scalar;
+    this.y *= scalar;
+    this.z *= scalar;
+    return this;
+  }
+
+  normalize(): this {
+    const length = this.length();
+    if (length !== 0) {
+      this.multiplyScalar(1 / length);
+    }
+    return this;
+  }
+
+  length(): number {
+    return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+  }
+
+  copy(v: Vector3): this {
+    this.x = v.x;
+    this.y = v.y;
+    this.z = v.z;
+    return this;
+  }
+
+  clone(): Vector3 {
+    return new Vector3(this.x, this.y, this.z);
+  }
+}
+
+export class Euler {
+  x: number = 0;
+  y: number = 0;
+  z: number = 0;
+  order: string = 'XYZ';
+
+  constructor(x = 0, y = 0, z = 0, order = 'XYZ') {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+    this.order = order;
+  }
+}
+
+export class Object3D {
+  position = new Vector3();
+  rotation = new Euler();
+  scale = new Vector3(1, 1, 1);
+  children: Object3D[] = [];
+  parent: Object3D | null = null;
+
+  add(object: Object3D): this {
+    this.children.push(object);
+    object.parent = this;
+    return this;
+  }
+
+  remove(object: Object3D): this {
+    const index = this.children.indexOf(object);
+    if (index !== -1) {
+      this.children.splice(index, 1);
+      object.parent = null;
+    }
+    return this;
+  }
+
+  traverse(callback: (object: Object3D) => void): void {
+    callback(this);
+    this.children.forEach(child => child.traverse(callback));
+  }
+}
+
+export class Group extends Object3D {}
+
+export class Scene extends Object3D {
+  fog: any = null;
+}
+
+export class PerspectiveCamera extends Object3D {
+  fov: number;
+  aspect: number;
+  near: number;
+  far: number;
+
+  constructor(fov = 50, aspect = 1, near = 0.1, far = 2000) {
+    super();
+    this.fov = fov;
+    this.aspect = aspect;
+    this.near = near;
+    this.far = far;
+  }
+}
+
+export class WebGLRenderer {
+  domElement = document.createElement('canvas');
+  shadowMap = { enabled: false, type: 'PCFSoftShadowMap' };
+  outputColorSpace = 'srgb';
+  toneMapping = 'ACESFilmicToneMapping';
+  toneMappingExposure = 1.0;
+
+  constructor(parameters?: any) {}
+
+  setSize(width: number, height: number): void {}
+  setPixelRatio(pixelRatio: number): void {}
+  render(scene: Scene, camera: PerspectiveCamera): void {}
+}
+
+export class Geometry {}
+export class BufferGeometry extends Geometry {}
+export class PlaneGeometry extends BufferGeometry {
+  constructor(width?: number, height?: number) { super(); }
+}
+export class CapsuleGeometry extends BufferGeometry {
+  constructor(radius?: number, height?: number) { super(); }
+}
+export class SphereGeometry extends BufferGeometry {
+  constructor(radius?: number) { super(); }
+}
+export class BoxGeometry extends BufferGeometry {
+  constructor(width?: number, height?: number, depth?: number) { super(); }
+}
+
+export class Material {}
+export class MeshLambertMaterial extends Material {
+  color: number;
+  constructor(parameters?: { color?: number }) {
+    super();
+    this.color = parameters?.color ?? 0xffffff;
+  }
+}
+
+export class Mesh extends Object3D {
+  geometry: BufferGeometry;
+  material: Material;
+  castShadow = false;
+  receiveShadow = false;
+
+  constructor(geometry: BufferGeometry, material: Material) {
+    super();
+    this.geometry = geometry;
+    this.material = material;
+  }
+}
+
+export class Light extends Object3D {
+  color: number;
+  intensity: number;
+
+  constructor(color?: number, intensity?: number) {
+    super();
+    this.color = color ?? 0xffffff;
+    this.intensity = intensity ?? 1;
+  }
+}
+
+export class AmbientLight extends Light {
+  constructor(color?: number, intensity?: number) {
+    super(color, intensity);
+  }
+}
+
+export class DirectionalLight extends Light {
+  shadow = {
+    mapSize: { width: 512, height: 512 }
+  };
+  castShadow = false;
+
+  constructor(color?: number, intensity?: number) {
+    super(color, intensity);
+  }
+}
+
+export class Fog {
+  color: number;
+  near: number;
+  far: number;
+
+  constructor(color: number, near: number, far: number) {
+    this.color = color;
+    this.near = near;
+    this.far = far;
+  }
+}
+
+// Constants
+export const PCFSoftShadowMap = 'PCFSoftShadowMap';
+export const SRGBColorSpace = 'srgb';
+export const ACESFilmicToneMapping = 'ACESFilmicToneMapping';
