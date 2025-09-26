@@ -129,6 +129,12 @@ src/
 └── utils/         # Utility functions and helpers
 ```
 
+## Live Demo
+
+🎮 **[Play Copilot RPG](https://jikaheimo.github.io/copilot-rpg/)**
+
+The game is automatically deployed to GitHub Pages when changes are pushed to the main branch.
+
 ## Development
 
 ### Available Scripts
@@ -158,6 +164,12 @@ Run `npm run test:coverage` to see detailed coverage reports.
 
 ### Code Quality
 The project uses ESLint for code quality and TypeScript for type safety. All code is thoroughly documented and follows consistent patterns.
+
+### Deployment
+The game is automatically deployed to GitHub Pages using GitHub Actions. The deployment workflow:
+- Builds the project on every push to the main branch
+- Creates a production build with proper asset paths
+- Deploys to GitHub Pages at [https://jikaheimo.github.io/copilot-rpg/](https://jikaheimo.github.io/copilot-rpg/)
 
 ## Roadmap
 
