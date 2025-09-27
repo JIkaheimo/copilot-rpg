@@ -34,29 +34,34 @@ src/
 2. **Modular Design**: Each system is independent and can be easily extended or replaced
 3. **TypeScript First**: All code is strongly typed with comprehensive interfaces
 4. **Performance Focused**: Efficient game loops, object pooling, and optimized rendering
+5. **SOLID Principles**: All code must follow SOLID design principles for maintainability and extensibility
 
 ## Coding Standards
 
 ### TypeScript Patterns
 
 #### System Classes
-All game systems follow this pattern:
+All game systems follow this pattern and **MUST** implement SOLID principles:
 ```typescript
-export class SystemName {
+// Systems implement only the interfaces they need (ISP)
+export class SystemName implements IInitializable, IUpdatable {
     private initialized: boolean = false;
     
+    // Single responsibility: only system initialization (SRP)
     initialize(dependencies: Dependencies): void {
-        // System initialization logic
+        // Accept dependencies instead of creating them (DIP)
         this.initialized = true;
         console.log('🎯 SystemName initialized');
     }
     
+    // Single responsibility: only system updates (SRP)
     update(deltaTime: number): void {
         if (!this.initialized) return;
         // Update logic here
     }
     
-    cleanup(): void {
+    // Optional: only implement if system needs cleanup (ISP)
+    cleanup?(): void {
         // Cleanup resources
     }
 }
@@ -79,6 +84,246 @@ private emit(event: string, data?: any): void {
     this.eventListeners[event].forEach(callback => callback(data));
 }
 ```
+
+### SOLID Principles Implementation
+
+All code in this project **MUST** follow SOLID principles. These principles ensure maintainable, extensible, and testable code.
+
+#### Single Responsibility Principle (SRP)
+Each class should have only one reason to change.
+
+**✅ Good Example:**
+```typescript
+// HealthDisplay only handles health UI
+export class HealthDisplay implements IUIComponent {
+    private healthBar: HTMLElement | null = null;
+    
+    initialize(): void {
+        this.healthBar = document.getElementById('healthBar');
+    }
+    
+    update(gameState: GameState): void {
+        const healthPercentage = (gameState.player.health / gameState.player.maxHealth) * 100;
+        this.healthBar.style.width = `${healthPercentage}%`;
+    }
+}
+```
+
+**❌ Bad Example:**
+```typescript
+// UIManager handles ALL UI - violates SRP
+export class UIManager {
+    updateHealth() { /* health logic */ }
+    updateMana() { /* mana logic */ }
+    updateInventory() { /* inventory logic */ }
+    showNotifications() { /* notification logic */ }
+    // Too many responsibilities!
+}
+```
+
+#### Open/Closed Principle (OCP)
+Classes should be open for extension but closed for modification.
+
+**✅ Good Example:**
+```typescript
+// Factory pattern allows new types without modifying existing code
+export interface IInteractableCreator {
+    create(position: THREE.Vector3, config: any): IInteractable;
+    getType(): string;
+}
+
+export class InteractableObjectFactory {
+    private creators: Map<string, IInteractableCreator> = new Map();
+    
+    // Can add new creators without modifying this class
+    registerCreator(creator: IInteractableCreator): void {
+        this.creators.set(creator.getType(), creator);
+    }
+}
+
+// New interactable types extend the system
+export class DoorCreator implements IInteractableCreator {
+    getType(): string { return 'door'; }
+    create(position: THREE.Vector3, config: any): IInteractable {
+        // Door creation logic
+    }
+}
+```
+
+**❌ Bad Example:**
+```typescript
+// Must modify createInteractable for every new type
+createInteractable(type: string, position: THREE.Vector3): IInteractable {
+    switch (type) {
+        case 'chest': return this.createChest(position);
+        case 'tree': return this.createTree(position);
+        case 'door': return this.createDoor(position); // New addition requires modification
+        default: throw new Error('Unknown type');
+    }
+}
+```
+
+#### Liskov Substitution Principle (LSP)
+Objects should be replaceable with instances of their subtypes without altering correctness.
+
+**✅ Good Example:**
+```typescript
+interface IUIComponent {
+    initialize(): void;
+    update(gameState: GameState): void;
+}
+
+// All UI components can be used interchangeably
+class HealthDisplay implements IUIComponent { /* implementation */ }
+class ManaDisplay implements IUIComponent { /* implementation */ }
+
+// Can substitute any IUIComponent
+function updateUI(component: IUIComponent, gameState: GameState): void {
+    component.update(gameState); // Works with any implementation
+}
+```
+
+#### Interface Segregation Principle (ISP)
+Clients should not be forced to depend on interfaces they don't use.
+
+**✅ Good Example:**
+```typescript
+// Segregated interfaces - only implement what you need
+interface IInitializable {
+    initialize(...args: any[]): void | Promise<void>;
+}
+
+interface IUpdatable {
+    update(deltaTime: number): void;
+}
+
+interface ICleanable {
+    cleanup(): void;
+}
+
+// System only implements interfaces it needs
+export class WeatherSystem implements IInitializable, IUpdatable {
+    initialize(scene: THREE.Scene): void { /* */ }
+    update(deltaTime: number): void { /* */ }
+    // No cleanup method - doesn't implement ICleanable
+}
+```
+
+**❌ Bad Example:**
+```typescript
+// Fat interface forces unused methods
+interface IGameSystem {
+    initialize(): void;
+    update(deltaTime: number): void;
+    render(): void;        // Not all systems render
+    handleInput(): void;   // Not all systems handle input
+    serialize(): string;   // Not all systems serialize
+}
+```
+
+#### Dependency Inversion Principle (DIP)
+Depend on abstractions, not concretions.
+
+**✅ Good Example:**
+```typescript
+// High-level module depends on abstraction
+export class GameSystemManager {
+    private systems: Map<string, IInitializable> = new Map();
+    
+    // Depends on interface, not concrete class
+    registerSystem(name: string, system: IInitializable): void {
+        this.systems.set(name, system);
+    }
+}
+
+// Low-level modules implement abstraction
+export class CombatSystem implements IInitializable {
+    initialize(scene: THREE.Scene, gameState: GameState): void {
+        // Implementation details
+    }
+}
+```
+
+**❌ Bad Example:**
+```typescript
+// High-level module depends on concrete classes
+export class Game {
+    private combatSystem: CombatSystem;      // Concrete dependency
+    private weatherSystem: WeatherSystem;   // Concrete dependency
+    
+    constructor() {
+        this.combatSystem = new CombatSystem();    // Direct instantiation
+        this.weatherSystem = new WeatherSystem();  // Direct instantiation
+    }
+}
+```
+
+### SOLID Compliance Guidelines
+
+#### For New Classes
+1. **Define clear responsibility** - What is the single purpose of this class?
+2. **Create focused interfaces** - Only include methods the class actually needs
+3. **Use dependency injection** - Accept dependencies through constructor or setters
+4. **Design for extension** - Use composition and interfaces over inheritance
+
+#### For Existing Code
+1. **Identify violations** - Look for classes with multiple responsibilities
+2. **Extract concerns** - Split large classes into focused components
+3. **Introduce abstractions** - Create interfaces for external dependencies
+4. **Refactor incrementally** - Make small, safe changes with tests
+
+#### Code Patterns to Follow
+
+**Factory Pattern for Object Creation:**
+```typescript
+export class SystemFactory {
+    createSystem(type: string, config: any): IGameSystem {
+        const creator = this.creators.get(type);
+        return creator.create(config);
+    }
+}
+```
+
+**Strategy Pattern for Algorithms:**
+```typescript
+interface IRenderStrategy {
+    render(scene: THREE.Scene, camera: THREE.Camera): void;
+}
+
+export class Renderer {
+    private strategy: IRenderStrategy;
+    
+    setStrategy(strategy: IRenderStrategy): void {
+        this.strategy = strategy;
+    }
+}
+```
+
+**Observer Pattern for Events:**
+```typescript
+interface IEventListener {
+    onEvent(event: GameEvent): void;
+}
+
+export class EventBus {
+    private listeners: Map<string, IEventListener[]> = new Map();
+    
+    subscribe(event: string, listener: IEventListener): void {
+        // Registration logic
+    }
+}
+```
+
+### Code Review Checklist
+
+Before submitting code, verify:
+- [ ] Each class has a single, clear responsibility
+- [ ] New functionality extends existing code without modification
+- [ ] Dependencies are injected, not instantiated directly
+- [ ] Interfaces are focused and cohesive
+- [ ] Abstractions are used instead of concrete types
+- [ ] Code is testable with mock dependencies
+- [ ] Documentation explains the design decisions
 
 #### State Management
 ```typescript
@@ -137,35 +382,37 @@ export class UIManager {
 
 ### Adding New Game Systems
 
-When creating new game systems:
+When creating new game systems, **MUST** follow SOLID principles:
 
 1. **Create in `src/systems/` directory**
-2. **Follow the System class pattern above**
-3. **Add initialization to `Game.ts`**
-4. **Use event-driven communication**
-5. **Include proper TypeScript interfaces**
+2. **Follow SOLID principles** - Single responsibility, proper interfaces, dependency injection
+3. **Use GameSystemManager** - Register with the system manager instead of modifying Game.ts
+4. **Use event-driven communication** - No direct system-to-system dependencies
+5. **Include proper TypeScript interfaces** - Implement only needed interfaces (ISP)
+6. **Design for extension** - Use factory patterns where applicable (OCP)
 
 Example:
 ```typescript
-// src/systems/NewSystem.ts
-export class NewSystem {
+// src/systems/NewSystem.ts - Following SOLID principles
+export class NewSystem implements IInitializable, IUpdatable {
     private scene: THREE.Scene | null = null;
     
+    // Single responsibility: initialization (SRP)
     initialize(scene: THREE.Scene): void {
-        this.scene = scene;
+        this.scene = scene; // Dependency injection (DIP)
         console.log('🎮 NewSystem initialized');
     }
     
+    // Single responsibility: updates (SRP)
     update(deltaTime: number): void {
+        if (!this.scene) return;
         // System update logic
     }
 }
 
-// Add to Game.ts constructor:
-this.newSystem = new NewSystem();
-
-// Add to Game.initialize():
-this.newSystem.initialize(this.sceneManager.getScene());
+// Register with GameSystemManager (OCP - no Game.ts modification needed):
+const systemManager = new GameSystemManager(eventBus, sceneManager, gameState);
+systemManager.registerSystem('newSystem', new NewSystem());
 ```
 
 ### Character and Combat Systems

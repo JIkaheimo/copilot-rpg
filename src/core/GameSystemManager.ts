@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import { GameState } from '@core/GameState';
 import { SceneManager } from '@core/SceneManager';
 import { EventBus } from '@core/EventBus';
