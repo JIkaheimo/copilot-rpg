@@ -109,8 +109,8 @@ describe('EnemySystem', () => {
         });
 
         it('should handle invalid enemy type', () => {
-            const position = new THREE.Vector3(10, 0, 10);
             const consoleSpy = vi.spyOn(console, 'warn').mockImplementation();
+            const position = new THREE.Vector3(10, 0, 10);
             
             const enemyId = enemySystem.spawnEnemy('invalid' as any, position);
             

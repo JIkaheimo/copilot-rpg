@@ -1,5 +1,30 @@
 // Vitest setup file for testing environment
 import { vi } from 'vitest';
+import failOnConsole from 'vitest-fail-on-console';
+
+// Configure vitest-fail-on-console to fail tests on error and warn
+failOnConsole({
+  failOnWarn: true,
+  failOnError: true,
+  silenceMessage: (message, methodName) => {
+    // Allow expected error messages in tests
+    if (methodName === 'error') {
+      if (message.includes('Failed to save game:') || 
+          message.includes('Failed to load game:')) {
+        return true;
+      }
+    }
+    
+    // Allow expected warning messages in tests
+    if (methodName === 'warn') {
+      if (message.includes('Unknown enemy type:')) {
+        return true;
+      }
+    }
+    
+    return false;
+  },
+});
 
 // Mock navigator.getGamepads for testing
 Object.defineProperty(global, 'navigator', {
