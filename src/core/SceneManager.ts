@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { TextureGenerator } from '../utils/TextureGenerator';
+import { AnimationSystem } from '../systems/AnimationSystem';
+import { AnimationPresets } from '../systems/AnimationPresets';
 
 export class SceneManager {
     private renderer: THREE.WebGLRenderer;
@@ -7,10 +9,16 @@ export class SceneManager {
     private camera: THREE.PerspectiveCamera;
     private ambientLight: THREE.AmbientLight;
     private directionalLight: THREE.DirectionalLight;
+    private animationSystem: AnimationSystem;
     
     constructor(renderer: THREE.WebGLRenderer) {
         this.renderer = renderer;
         this.scene = new THREE.Scene();
+        
+        // Initialize animation system
+        this.animationSystem = new AnimationSystem();
+        this.animationSystem.initialize();
+        AnimationPresets.setAnimationSystem(this.animationSystem);
         
         // Initialize camera
         this.camera = new THREE.PerspectiveCamera(
@@ -60,15 +68,22 @@ export class SceneManager {
     }
     
     private createBasicTerrain(): void {
-        // Add some trees
+        // Add some trees with animations
         for (let i = 0; i < 20; i++) {
             const tree = this.createTree();
-            tree.position.set(
+            const position = new THREE.Vector3(
                 (Math.random() - 0.5) * 80,
                 0,
                 (Math.random() - 0.5) * 80
             );
+            tree.position.copy(position);
             this.scene.add(tree);
+            
+            // Add swaying animation to each tree
+            const treeId = `tree_${i}`;
+            const windStrength = 0.3 + Math.random() * 0.4; // Vary wind effect
+            const windSpeed = 0.8 + Math.random() * 0.4;   // Vary wind speed
+            AnimationPresets.createTreeSwayAnimation(treeId, tree, windStrength, windSpeed);
         }
         
         // Add some rocks
@@ -136,8 +151,10 @@ export class SceneManager {
     }
     
     update(deltaTime: number): void {
-        // Update any animated scene elements
-        // For now, just a simple rotation example
+        // Update animation system
+        this.animationSystem.update(deltaTime);
+        
+        // Update any legacy animated scene elements
         this.scene.traverse((object) => {
             if (object.userData.rotate) {
                 object.rotation.y += deltaTime * 0.5;
@@ -176,5 +193,9 @@ export class SceneManager {
     
     getAmbientLight(): THREE.AmbientLight {
         return this.ambientLight;
+    }
+    
+    getAnimationSystem(): AnimationSystem {
+        return this.animationSystem;
     }
 }

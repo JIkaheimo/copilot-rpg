@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { InputManager } from '@core/InputManager';
 import { MobileControls } from '@ui/MobileControls';
 import { CharacterModelGenerator } from '@utils/CharacterModelGenerator';
+import { AnimationSystem, AnimationState } from './AnimationSystem';
+import { AnimationPresets } from './AnimationPresets';
 
 export class PlayerController {
     private inputManager: InputManager;
@@ -10,6 +12,8 @@ export class PlayerController {
     private velocity: THREE.Vector3;
     private isGrounded: boolean = true;
     private mobileControls: MobileControls;
+    private animationSystem: AnimationSystem | null = null;
+    private lastMovementState: 'idle' | 'walking' | 'running' = 'idle';
     
     // Movement settings
     private moveSpeed: number = 5;
@@ -54,7 +58,21 @@ export class PlayerController {
         // Set initial position
         this.player.position.set(0, 0, 0);
         
+        // Start idle breathing animation if animation system is available
+        if (this.animationSystem) {
+            AnimationPresets.createBreathingAnimation('player', this.player, 0.015);
+        }
+        
         console.log('🧙‍♂️ Enhanced player character created with detailed model');
+    }
+    
+    setAnimationSystem(animationSystem: AnimationSystem): void {
+        this.animationSystem = animationSystem;
+        
+        // Start idle animation if player already exists
+        if (this.player) {
+            AnimationPresets.createBreathingAnimation('player', this.player, 0.015);
+        }
     }
     
     private setupCamera(): void {
@@ -69,6 +87,43 @@ export class PlayerController {
         this.handleInput(deltaTime);
         this.updatePhysics(deltaTime);
         this.updateCameraPosition();
+        this.updateAnimations();
+    }
+    
+    private updateAnimations(): void {
+        if (!this.animationSystem) return;
+        
+        // Determine current movement state
+        const velocityMagnitude = this.velocity.length();
+        let newMovementState: 'idle' | 'walking' | 'running' = 'idle';
+        
+        if (velocityMagnitude > 0.1) {
+            newMovementState = velocityMagnitude > this.moveSpeed + 1 ? 'running' : 'walking';
+        }
+        
+        // Update animation state if changed
+        if (newMovementState !== this.lastMovementState) {
+            const newAnimationState: AnimationState = newMovementState;
+            
+            // Stop current movement animation and start new one
+            if (this.lastMovementState !== 'idle') {
+                this.animationSystem.removeAllAnimations(`player_${this.lastMovementState}`);
+            }
+            
+            // Start new animation based on state
+            if (newAnimationState === 'walking') {
+                AnimationPresets.createWalkingAnimation('player_walking', this.player, 1.0);
+            } else if (newAnimationState === 'running') {
+                AnimationPresets.createWalkingAnimation('player_running', this.player, 1.8);
+            }
+            
+            // Update animation system state
+            this.animationSystem.setAnimationState('player', newAnimationState, 0.2);
+            this.lastMovementState = newMovementState;
+        }
+        
+        // Update animation system with player position for culling
+        this.animationSystem.updatePlayerPosition(this.player.position);
     }
     
     private handleInput(deltaTime: number): void {
@@ -246,6 +301,12 @@ export class PlayerController {
                             (this.inputManager.isMobileDevice() && this.mobileControls.isAttackPressed());
         
         if (shouldAttack) {
+            // Play attack animation
+            if (this.animationSystem) {
+                AnimationPresets.createAttackAnimation('player_attack', this.player, 'swing');
+                this.animationSystem.setAnimationState('player', 'attacking', 0.1);
+            }
+            
             // Combat will be handled by the Game class through the CombatSystem
             // Emit event that game can listen for
             const event = new CustomEvent('playerAttack');

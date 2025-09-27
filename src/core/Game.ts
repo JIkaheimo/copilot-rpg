@@ -103,6 +103,9 @@ export class Game {
         this.inputManager.initialize();
         this.uiManager.initialize(this.gameState);
         
+        // Set up animation system connections
+        this.setupAnimationSystem();
+        
         // Add player to scene
         const player = this.playerController.getPlayer();
         this.sceneManager.addToScene(player);
@@ -154,6 +157,18 @@ export class Game {
         
         // Start the game loop
         this.start();
+    }
+    
+    private setupAnimationSystem(): void {
+        // Get animation system from scene manager
+        const animationSystem = this.sceneManager.getAnimationSystem();
+        
+        // Connect animation system to systems that need it
+        this.playerController.setAnimationSystem(animationSystem);
+        this.enemySystem.setAnimationSystem(animationSystem);
+        this.interactionSystem.setAnimationSystem(animationSystem);
+        
+        console.log('🎬 Animation system connected to game systems');
     }
     
     private setupEventBusIntegrations(): void {

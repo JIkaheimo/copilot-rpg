@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { EventEmitter } from '@core/EventEmitter';
 import { CharacterModelGenerator } from '@utils/CharacterModelGenerator';
+import { AnimationSystem } from './AnimationSystem';
+import { AnimationPresets } from './AnimationPresets';
 
 export interface EnemyData {
     id: string;
@@ -30,9 +32,14 @@ export class EnemySystem extends EventEmitter {
     private scene: THREE.Scene | null = null;
     private enemies: Map<string, EnemyData> = new Map();
     private nextEnemyId: number = 1;
+    private animationSystem: AnimationSystem | null = null;
 
     constructor() {
         super('enemy');
+    }
+    
+    setAnimationSystem(animationSystem: AnimationSystem): void {
+        this.animationSystem = animationSystem;
     }
     
     // Enemy type definitions
@@ -144,6 +151,11 @@ export class EnemySystem extends EventEmitter {
         enemy.mesh = this.createEnemyMesh(enemyType, level);
         enemy.mesh.position.copy(position);
         this.scene.add(enemy.mesh);
+        
+        // Start idle breathing animation
+        if (this.animationSystem && enemy.mesh) {
+            AnimationPresets.createBreathingAnimation(`enemy_${enemyId}_idle`, enemy.mesh, 0.01);
+        }
         
         this.enemies.set(enemyId, enemy);
         
@@ -406,6 +418,9 @@ export class EnemySystem extends EventEmitter {
     private updateEnemy(enemy: EnemyData, deltaTime: number, playerPosition?: THREE.Vector3): void {
         if (enemy.state === 'dead') return;
         
+        // Store previous state for animation transitions
+        const previousState = enemy.state;
+        
         // Update attack cooldown
         if (enemy.lastAttackTime > 0) {
             enemy.lastAttackTime -= deltaTime;
@@ -427,6 +442,11 @@ export class EnemySystem extends EventEmitter {
                 break;
         }
         
+        // Update animations if state changed
+        if (previousState !== enemy.state && this.animationSystem && enemy.mesh) {
+            this.updateEnemyAnimation(enemy, previousState);
+        }
+        
         // Update visual position
         if (enemy.mesh) {
             enemy.mesh.position.copy(enemy.position);
@@ -439,6 +459,38 @@ export class EnemySystem extends EventEmitter {
                 enemy.mesh.lookAt(enemy.position.clone().add(direction));
             }
         }
+    }
+    
+    private updateEnemyAnimation(enemy: EnemyData, previousState: string): void {
+        if (!this.animationSystem || !enemy.mesh) return;
+        
+        const animationId = `enemy_${enemy.id}`;
+        
+        // Remove previous state animation
+        if (previousState !== 'idle') {
+            this.animationSystem.removeAllAnimations(`${animationId}_${previousState}`);
+        }
+        
+        // Start new animation based on current state
+        switch (enemy.state) {
+            case 'idle':
+                AnimationPresets.createBreathingAnimation(`${animationId}_idle`, enemy.mesh, 0.01);
+                break;
+            case 'patrolling':
+                AnimationPresets.createWalkingAnimation(`${animationId}_patrolling`, enemy.mesh, 0.8);
+                break;
+            case 'chasing':
+                AnimationPresets.createWalkingAnimation(`${animationId}_chasing`, enemy.mesh, 1.5);
+                break;
+            case 'attacking': {
+                const attackType = enemy.type === 'wolf' ? 'thrust' : 'swing';
+                AnimationPresets.createAttackAnimation(`${animationId}_attacking`, enemy.mesh, attackType);
+                break;
+            }
+        }
+        
+        // Update animation system state
+        this.animationSystem.setAnimationState(animationId, enemy.state as any, 0.3);
     }
     
     private updateIdleState(enemy: EnemyData, deltaTime: number, playerPosition?: THREE.Vector3): void {
@@ -562,6 +614,20 @@ export class EnemySystem extends EventEmitter {
         
         enemy.health = Math.max(0, enemy.health - damage);
         
+        // Play hit reaction animation
+        if (this.animationSystem && enemy.mesh && enemy.health > 0) {
+            const knockbackDirection = new THREE.Vector3(
+                (Math.random() - 0.5) * 2,
+                0,
+                (Math.random() - 0.5) * 2
+            ).normalize();
+            AnimationPresets.createHitReactionAnimation(
+                `enemy_${enemyId}_hit`, 
+                enemy.mesh, 
+                knockbackDirection
+            );
+        }
+        
         this.emit('enemyDamaged', {
             enemyId,
             damage,
@@ -582,9 +648,16 @@ export class EnemySystem extends EventEmitter {
         
         enemy.state = 'dead';
         
-        // Remove visual representation
-        if (enemy.mesh && this.scene) {
-            this.scene.remove(enemy.mesh);
+        // Play death animation
+        if (this.animationSystem && enemy.mesh) {
+            // Remove all existing animations
+            this.animationSystem.removeAllAnimations(`enemy_${enemyId}_idle`);
+            this.animationSystem.removeAllAnimations(`enemy_${enemyId}_patrolling`);
+            this.animationSystem.removeAllAnimations(`enemy_${enemyId}_chasing`);
+            this.animationSystem.removeAllAnimations(`enemy_${enemyId}_attacking`);
+            
+            // Play death animation
+            AnimationPresets.createDeathAnimation(`enemy_${enemyId}_death`, enemy.mesh);
         }
         
         this.emit('enemyKilled', {
@@ -594,6 +667,13 @@ export class EnemySystem extends EventEmitter {
         });
         
         console.log(`👹 ${enemy.name} has been defeated! (+${enemy.experienceReward} XP)`);
+        
+        // Remove visual representation after death animation completes
+        setTimeout(() => {
+            if (enemy.mesh && this.scene) {
+                this.scene.remove(enemy.mesh);
+            }
+        }, 2500); // Death animation duration + small buffer
         
         // Remove from tracking after a delay (for any cleanup)
         setTimeout(() => {
