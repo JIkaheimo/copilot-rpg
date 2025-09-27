@@ -24,7 +24,7 @@ export class TextureGenerator {
      */
     static generateGrassTexture(size: number = 512): THREE.Texture {
         // Fallback for test environment
-        if (!this.canvas || !this.ctx) {
+        if (!this.canvas || !this.ctx || typeof this.ctx.createImageData !== 'function') {
             return this.createFallbackTexture(0x228B22);
         }
         
@@ -79,7 +79,7 @@ export class TextureGenerator {
      */
     static generateBarkTexture(size: number = 256): THREE.Texture {
         // Fallback for test environment
-        if (!this.canvas || !this.ctx) {
+        if (!this.canvas || !this.ctx || typeof this.ctx.fillRect !== 'function') {
             return this.createFallbackTexture(0x8B4513);
         }
         
@@ -125,7 +125,7 @@ export class TextureGenerator {
      */
     static generateStoneTexture(size: number = 256): THREE.Texture {
         // Fallback for test environment
-        if (!this.canvas || !this.ctx) {
+        if (!this.canvas || !this.ctx || typeof this.ctx.createImageData !== 'function') {
             return this.createFallbackTexture(0x696969);
         }
         
@@ -173,7 +173,7 @@ export class TextureGenerator {
      */
     static generateMetalTexture(size: number = 256, baseColor: number = 0x888888): THREE.Texture {
         // Fallback for test environment
-        if (!this.canvas || !this.ctx) {
+        if (!this.canvas || !this.ctx || typeof this.ctx.createImageData !== 'function') {
             return this.createFallbackTexture(baseColor);
         }
         
@@ -226,7 +226,7 @@ export class TextureGenerator {
      */
     static generateWoodTexture(size: number = 256): THREE.Texture {
         // Fallback for test environment
-        if (!this.canvas || !this.ctx) {
+        if (!this.canvas || !this.ctx || typeof this.ctx.createLinearGradient !== 'function') {
             return this.createFallbackTexture(0x8B4513);
         }
         
@@ -271,7 +271,7 @@ export class TextureGenerator {
      */
     static generateNormalMap(_heightTexture: THREE.Texture, strength: number = 1): THREE.Texture {
         // Fallback for test environment
-        if (!this.canvas || !this.ctx) {
+        if (!this.canvas || !this.ctx || typeof this.ctx.createImageData !== 'function') {
             return this.createFallbackTexture(0x8080FF); // Normal map blue
         }
         
@@ -313,23 +313,14 @@ export class TextureGenerator {
      * Create a fallback texture for test environments
      */
     private static createFallbackTexture(color: number): THREE.Texture {
-        // For test environments where canvas isn't available, create a simple data texture
-        const data = new Uint8Array(4); // 1x1 RGBA
-        
-        // Convert color to RGB
-        const r = (color >> 16) & 0xFF;
-        const g = (color >> 8) & 0xFF;  
-        const b = color & 0xFF;
-        
-        data[0] = r; // R
-        data[1] = g; // G
-        data[2] = b; // B
-        data[3] = 255; // A
-        
-        const texture = new THREE.DataTexture(data, 1, 1, THREE.RGBAFormat);
+        // Create a simple 1x1 texture for testing/fallback
+        const texture = new THREE.Texture();
         texture.wrapS = THREE.RepeatWrapping;
         texture.wrapT = THREE.RepeatWrapping;
         texture.needsUpdate = true;
+        
+        // Set a simple color property for testing
+        (texture as any).fallbackColor = color;
         
         return texture;
     }

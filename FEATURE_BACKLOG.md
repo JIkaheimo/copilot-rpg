@@ -281,6 +281,9 @@ This document serves as the comprehensive feature backlog for Copilot RPG. Featu
 - ✅ **Basic 3D Rendering** - Three.js WebGL rendering
 - ✅ **Shadow Mapping** - Dynamic shadows
 - ✅ **Post-Processing** - Tone mapping and color grading
+- ✅ **Procedural Textures** - Generated textures for terrain, objects, and materials
+- ✅ **PBR Materials** - Physically-based rendering with metalness and roughness
+- ✅ **Normal Mapping** - Surface detail through normal maps
 - 📋 **Level of Detail (LOD)** - Performance optimization for distant objects
 - 📋 **Texture Streaming** - Dynamic texture loading for large worlds
 - 📋 **Particle Systems** - Visual effects for spells and environment
