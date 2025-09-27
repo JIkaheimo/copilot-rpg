@@ -127,7 +127,7 @@ export class InputManager {
         }
         
         // Update gamepad
-        if (navigator && typeof navigator.getGamepads === 'function') {
+        if (typeof navigator !== 'undefined' && navigator && typeof navigator.getGamepads === 'function') {
             const gamepads = navigator.getGamepads();
             this.inputState.gamepad = gamepads[0] || null;
         } else {

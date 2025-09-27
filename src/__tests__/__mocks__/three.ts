@@ -96,6 +96,20 @@ export class Vector3 {
     this.z += v.z * s;
     return this;
   }
+
+  subVectors(a: Vector3, b: Vector3): this {
+    this.x = a.x - b.x;
+    this.y = a.y - b.y;
+    this.z = a.z - b.z;
+    return this;
+  }
+
+  sub(v: Vector3): this {
+    this.x -= v.x;
+    this.y -= v.y;
+    this.z -= v.z;
+    return this;
+  }
 }
 
 export class Euler {
@@ -126,6 +140,19 @@ export class Object3D {
   scale = new Vector3(1, 1, 1);
   children: Object3D[] = [];
   parent: Object3D | null = null;
+  userData: { [key: string]: any } = {};
+
+  constructor() {
+    this.scale.setScalar = (value: number) => {
+      this.scale.x = value;
+      this.scale.y = value;
+      this.scale.z = value;
+      return this.scale;
+    };
+    
+    // Add rotate method to rotation
+    (this.rotation as any).rotate = vi.fn();
+  }
 
   add(object: Object3D): this {
     this.children.push(object);
@@ -146,12 +173,31 @@ export class Object3D {
     callback(this);
     this.children.forEach(child => child.traverse(callback));
   }
+
+  lookAt(target: Vector3 | number, y?: number, z?: number): void {
+    // Mock lookAt method for meshes/objects
+    if (typeof target === 'number' && y !== undefined && z !== undefined) {
+      return;
+    }
+    // Vector3 parameter - no calculations needed for testing
+  }
 }
 
-export class Group extends Object3D {}
+export class Group extends Object3D {
+  constructor() {
+    super();
+    this.userData = {};
+  }
+}
 
 export class Scene extends Object3D {
   fog: any = null;
+
+  constructor() {
+    super();
+    // Create a proper fog mock that works with the DayNightCycle system
+    this.fog = new Fog(0xffffff, 100, 1000);
+  }
 }
 
 export class PerspectiveCamera extends Object3D {
@@ -189,15 +235,20 @@ export class PerspectiveCamera extends Object3D {
 }
 
 export class WebGLRenderer {
-  domElement = document.createElement('canvas');
+  domElement: HTMLCanvasElement;
   shadowMap = { enabled: false, type: 'PCFSoftShadowMap' };
   outputColorSpace = 'srgb';
   toneMapping = 'ACESFilmicToneMapping';
   toneMappingExposure = 1.0;
 
-  constructor(_parameters?: any) {}
+  constructor(parameters?: { canvas?: HTMLCanvasElement }) {
+    this.domElement = parameters?.canvas || document.createElement('canvas');
+  }
 
-  setSize(_width: number, _height: number): void {}
+  setSize(width: number, height: number): void {
+    this.domElement.width = width;
+    this.domElement.height = height;
+  }
   setPixelRatio(_pixelRatio: number): void {}
   render(_scene: Scene, _camera: PerspectiveCamera): void {}
 }
@@ -236,13 +287,36 @@ export class BoxGeometry extends BufferGeometry {
 export class CylinderGeometry extends BufferGeometry {
   constructor(_radiusTop?: number, _radiusBottom?: number, _height?: number) { super(); }
 }
+export class DodecahedronGeometry extends BufferGeometry {
+  constructor(_radius?: number) { super(); }
+}
 
-export class Material {}
+export class Material {
+  color?: { setHex: (value: number) => any };
+  
+  constructor() {
+    this.color = {
+      setHex: vi.fn((value: number) => {
+        (this.color as any)._value = value;
+        return this.color;
+      })
+    };
+  }
+}
 export class MeshLambertMaterial extends Material {
-  color: number;
   constructor(parameters?: { color?: number }) {
     super();
-    this.color = parameters?.color ?? 0xffffff;
+    if (parameters?.color !== undefined && this.color) {
+      this.color.setHex(parameters.color);
+    }
+  }
+}
+export class MeshBasicMaterial extends Material {
+  constructor(parameters?: { color?: number }) {
+    super();
+    if (parameters?.color !== undefined && this.color) {
+      this.color.setHex(parameters.color);
+    }
   }
 }
 export class PointsMaterial extends Material {
@@ -272,14 +346,21 @@ export class Points extends Object3D {
 }
 
 export class Fog {
-  color: number;
+  color: any;
   near: number;
   far: number;
   
   constructor(color: number, near: number, far: number) {
-    this.color = color;
     this.near = near;
     this.far = far;
+    // Create a proper color mock that supports setHex method
+    this.color = {
+      setHex: vi.fn((value: number) => {
+        this.color._value = value;
+        return this.color;
+      }),
+      _value: color
+    };
   }
 }
 
@@ -293,7 +374,10 @@ export class Mesh extends Object3D {
     super();
     this.geometry = geometry;
     this.material = material;
+    this.userData = {};
   }
+
+  rotate = vi.fn();
 }
 
 export class Light extends Object3D {

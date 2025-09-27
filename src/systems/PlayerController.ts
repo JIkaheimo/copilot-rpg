@@ -133,6 +133,9 @@ export class PlayerController {
             this.isGrounded = false;
         }
         
+        // Combat input
+        this.handleCombatInput(input);
+        
         // Handle gamepad input
         const gamepad = input.getGamepad();
         if (gamepad) {
@@ -211,6 +214,22 @@ export class PlayerController {
         const lookAtTarget = this.player.position.clone();
         lookAtTarget.y += 1; // Look at player's chest level
         this.camera.lookAt(lookAtTarget);
+    }
+    
+    private handleCombatInput(input: InputManager): void {
+        // Attack input - Left mouse button or 'F' key
+        if (input.isKeyPressed('KeyF') || input.isMouseButtonPressed(0)) {
+            // Combat will be handled by the Game class through the CombatSystem
+            // Emit event that game can listen for
+            const event = new CustomEvent('playerAttack');
+            window.dispatchEvent(event);
+        }
+        
+        // Interaction input - 'E' key or right mouse button
+        if (input.isKeyPressed('KeyE') || input.isMouseButtonPressed(2)) {
+            const event = new CustomEvent('playerInteract');
+            window.dispatchEvent(event);
+        }
     }
     
     getPlayer(): THREE.Group {

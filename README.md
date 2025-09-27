@@ -8,10 +8,12 @@ A comprehensive single-player 3D RPG built with TypeScript and Three.js, featuri
 
 ### Core RPG Systems
 - ✅ **Character Progression**: Level up system with XP, skill trees, and attribute points
-- ✅ **Real-time Combat**: Action-based combat with health, mana, and stamina systems
+- ✅ **Real-time Combat**: Action-based combat with health, mana, stamina systems, enemy AI, and damage calculation
 - ✅ **Inventory & Equipment**: Complete item management with rarity tiers and equipment slots
 - ✅ **Quest System**: Dynamic quests with branching objectives and meaningful rewards
 - ✅ **Skill System**: Multiple skill trees including combat, magic, stealth, and crafting
+- ✅ **Enemy System**: Intelligent AI enemies (Goblins, Wolves, Orcs, Skeletons) with behavioral state machines
+- ✅ **Interactive World**: Treasure chests, resource harvesting (trees, rocks), and environmental interactions
 
 ### 3D World & Environment
 - ✅ **Open World**: Expansive 3D environment with procedural terrain generation
@@ -22,8 +24,9 @@ A comprehensive single-player 3D RPG built with TypeScript and Three.js, featuri
 ### Player Experience
 - ✅ **Third-Person Camera**: Smooth camera controls with mouse and gamepad support
 - ✅ **Movement System**: WASD movement with running, jumping, and physics
-- ✅ **User Interface**: Professional HUD with health bars, minimap, and menus
+- ✅ **User Interface**: Professional HUD with health bars, minimap, combat info, and interaction prompts
 - ✅ **Save/Load System**: Complete game state persistence with multiple save slots
+- ✅ **Combat Controls**: Attack with F key or left click, interact with E key or right click
 
 ### Advanced Features
 - ✅ **Controller Support**: Full gamepad compatibility alongside keyboard/mouse
@@ -72,6 +75,8 @@ The built files will be available in the `dist/` directory.
 - **Movement**: WASD keys
 - **Run**: Hold Shift while moving
 - **Jump**: Space bar
+- **Attack**: F key or Left mouse button
+- **Interact**: E key or Right mouse button
 - **Camera**: Mouse (click canvas to enable pointer lock)
 - **Menu**: Escape key
 - **Inventory**: Tab or I key
@@ -172,6 +177,15 @@ The game is automatically deployed to GitHub Pages using GitHub Actions. The dep
 - Deploys to GitHub Pages at [https://jikaheimo.github.io/copilot-rpg/](https://jikaheimo.github.io/copilot-rpg/)
 
 ## Roadmap
+
+### Comprehensive Feature Backlog
+Copilot RPG maintains an extensive feature backlog with 200+ planned features across all game systems. See [`FEATURE_BACKLOG.md`](FEATURE_BACKLOG.md) for the complete list of planned features, implementation priorities, and current development status.
+
+### Recently Implemented Features
+- ✅ **Real-time Combat System** - Action-based combat with damage calculation and critical hits
+- ✅ **Intelligent Enemy AI** - Goblins, wolves, orcs, and skeletons with behavioral state machines  
+- ✅ **Interactive World Objects** - Treasure chests and harvestable resource nodes
+- ✅ **Enhanced UI** - Combat information and interaction prompts
 
 ### Planned Features
 - [ ] Advanced AI NPCs with complex behaviors

@@ -8,6 +8,11 @@ export class UIManager {
     private healthText: HTMLElement | null = null;
     private levelText: HTMLElement | null = null;
     private xpText: HTMLElement | null = null;
+    private enemyCount: HTMLElement | null = null;
+    private attackCooldown: HTMLElement | null = null;
+    private cooldownTime: HTMLElement | null = null;
+    private interactionPrompt: HTMLElement | null = null;
+    private interactableName: HTMLElement | null = null;
     private minimapCanvas: HTMLCanvasElement | null = null;
     private minimapContext: CanvasRenderingContext2D | null = null;
     
@@ -19,6 +24,11 @@ export class UIManager {
         this.healthText = document.getElementById('healthText');
         this.levelText = document.getElementById('levelText');
         this.xpText = document.getElementById('xpText');
+        this.enemyCount = document.getElementById('enemyCount');
+        this.attackCooldown = document.getElementById('attackCooldown');
+        this.cooldownTime = document.getElementById('cooldownTime');
+        this.interactionPrompt = document.getElementById('interactionPrompt');
+        this.interactableName = document.getElementById('interactableName');
         
         // Initialize minimap
         this.initializeMinimap();
@@ -78,13 +88,15 @@ export class UIManager {
         });
     }
     
-    update(gameState: GameState): void {
+    update(gameState: GameState, combatInfo?: { enemyCount: number; attackCooldown: number }, interactionInfo?: { nearbyInteractables: any[] }): void {
         this.gameState = gameState;
         
         // Update all UI elements
         this.updateHealthDisplay();
         this.updateLevelDisplay();
         this.updateXPDisplay();
+        this.updateCombatInfo(combatInfo);
+        this.updateInteractionInfo(interactionInfo);
         this.updateMinimap();
     }
     
@@ -119,6 +131,37 @@ export class UIManager {
         if (!this.gameState || !this.xpText) return;
         
         this.xpText.textContent = `${this.gameState.player.experience}/${this.gameState.player.experienceToNext}`;
+    }
+    
+    private updateCombatInfo(combatInfo?: { enemyCount: number; attackCooldown: number }): void {
+        if (!combatInfo) return;
+        
+        // Update enemy count
+        if (this.enemyCount) {
+            this.enemyCount.textContent = combatInfo.enemyCount.toString();
+        }
+        
+        // Update attack cooldown
+        if (this.attackCooldown && this.cooldownTime) {
+            if (combatInfo.attackCooldown > 0) {
+                this.attackCooldown.style.display = 'block';
+                this.cooldownTime.textContent = combatInfo.attackCooldown.toFixed(1);
+            } else {
+                this.attackCooldown.style.display = 'none';
+            }
+        }
+    }
+    
+    private updateInteractionInfo(interactionInfo?: { nearbyInteractables: any[] }): void {
+        if (!interactionInfo || !this.interactionPrompt || !this.interactableName) return;
+        
+        if (interactionInfo.nearbyInteractables.length > 0) {
+            const nearest = interactionInfo.nearbyInteractables[0];
+            this.interactionPrompt.style.display = 'block';
+            this.interactableName.textContent = nearest.name;
+        } else {
+            this.interactionPrompt.style.display = 'none';
+        }
     }
     
     private updateMinimap(): void {
