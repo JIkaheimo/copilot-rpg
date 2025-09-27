@@ -563,7 +563,7 @@ export class Game {
             flowDirection: (() => {
                 try {
                     return new THREE.Vector2(0.3, 0.7);
-                } catch (error) {
+                } catch (_error) {
                     return { x: 0.3, y: 0.7 } as any;
                 }
             })()
@@ -583,7 +583,7 @@ export class Game {
             flowDirection: (() => {
                 try {
                     return new THREE.Vector2(1, 0);
-                } catch (error) {
+                } catch (_error) {
                     return { x: 1, y: 0 } as any;
                 }
             })()
@@ -603,7 +603,7 @@ export class Game {
             flowDirection: (() => {
                 try {
                     return new THREE.Vector2(1, 0.2);
-                } catch (error) {
+                } catch (_error) {
                     return { x: 1, y: 0.2 } as any;
                 }
             })()

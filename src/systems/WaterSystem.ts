@@ -114,7 +114,7 @@ export class WaterSystem {
         // Initialize reflection render target with error handling for test environment
         try {
             this.reflectionRenderTarget = new THREE.WebGLRenderTarget(512, 512);
-        } catch (error) {
+        } catch (_error) {
             // Handle test environment where WebGL is not available
             this.reflectionRenderTarget = {
                 texture: { isTexture: true },
@@ -127,7 +127,7 @@ export class WaterSystem {
         // Initialize reflection matrix with error handling
         try {
             this.reflectionMatrix = new THREE.Matrix4();
-        } catch (error) {
+        } catch (_error) {
             // Handle test environment
             this.reflectionMatrix = {
                 set: () => {},
@@ -150,7 +150,7 @@ export class WaterSystem {
                 value: (() => {
                     try {
                         return new THREE.Vector2(1, 0);
-                    } catch (error) {
+                    } catch (_error) {
                         return { x: 1, y: 0, equals: () => true };
                     }
                 })()
@@ -193,7 +193,7 @@ export class WaterSystem {
                     flowDirection: { value: config.flowDirection || (() => {
                         try {
                             return new THREE.Vector2(1, 0);
-                        } catch (error) {
+                        } catch (_error) {
                             return { x: 1, y: 0 };
                         }
                     })() }
@@ -203,7 +203,7 @@ export class WaterSystem {
                 transparent: true,
                 side: THREE.DoubleSide
             });
-        } catch (error) {
+        } catch (_error) {
             // Fallback for test environment
             material = {
                 uniforms: {

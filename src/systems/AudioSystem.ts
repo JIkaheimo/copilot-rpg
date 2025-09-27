@@ -86,7 +86,7 @@ export class AudioSystem {
         // Initialize audio context (for future Web Audio API features)
         try {
             new (window.AudioContext || (window as any).webkitAudioContext)();
-        } catch (error) {
+        } catch (_error) {
             console.warn('🔊 AudioContext not available, audio features disabled');
         }
     }

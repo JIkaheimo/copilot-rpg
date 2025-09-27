@@ -161,7 +161,6 @@ export class MagicSystem extends EventEmitter {
         });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     update(_deltaTime: number): void {
         if (!this.initialized) return;
 

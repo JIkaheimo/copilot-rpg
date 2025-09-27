@@ -283,7 +283,6 @@ export class AchievementSystem {
     }
 
     // Progress tracking methods
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     trackEnemyDefeat(_enemyType: string, _playerLevel: number): void {
         this.updateProgress('first_blood', 1);
         this.updateProgress('monster_slayer', 1);
@@ -299,7 +298,6 @@ export class AchievementSystem {
         this.updateProgress('treasure_hunter', 1);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     trackResourceGathered(_resourceType: string): void {
         this.updateProgress('collector', 1);
     }
