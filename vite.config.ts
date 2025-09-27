@@ -36,7 +36,8 @@ export default defineConfig({
             'src/systems/LightingSystem.ts',
             'src/systems/AtmosphereSystem.ts',
             'src/systems/LODSystem.ts',
-            'src/systems/WaterSystem.ts'
+            'src/systems/WaterSystem.ts',
+            'src/systems/AudioSystem.ts'
           ],
           
           // Gameplay systems

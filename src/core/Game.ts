@@ -17,6 +17,7 @@ import { AchievementSystem } from '@systems/AchievementSystem';
 import { MagicSystem } from '@systems/MagicSystem';
 import { LODSystem } from '@systems/LODSystem';
 import { WaterSystem } from '@systems/WaterSystem';
+import { AudioSystem } from '@systems/AudioSystem';
 import { EventBus } from '@core/EventBus';
 
 export class Game {
@@ -41,6 +42,7 @@ export class Game {
     private magicSystem: MagicSystem;
     private lodSystem: LODSystem;
     private waterSystem: WaterSystem;
+    private audioSystem: AudioSystem;
     
     private isRunning: boolean = false;
     private lastTime: number = 0;
@@ -84,6 +86,7 @@ export class Game {
         this.magicSystem = new MagicSystem();
         this.lodSystem = new LODSystem();
         this.waterSystem = new WaterSystem();
+        this.audioSystem = new AudioSystem();
         
         // Initialize player controller
         this.playerController = new PlayerController(
@@ -150,6 +153,9 @@ export class Game {
         // Initialize water system for realistic water rendering
         this.waterSystem.initialize(this.sceneManager.getScene(), this.sceneManager.getCamera(), this.renderer);
         
+        // Initialize audio system for 3D spatial audio
+        this.audioSystem.initialize(this.sceneManager.getScene(), this.sceneManager.getCamera());
+        
         // Add initial water bodies to the world
         this.addWorldWater();
         
@@ -164,6 +170,9 @@ export class Game {
         
         // Load saved game if available
         await this.saveSystem.loadGame(this.gameState);
+        
+        // Start background music for exploration
+        this.audioSystem.playBackgroundMusic('exploration', 2000);
         
         console.log('✅ Game systems initialized');
         
@@ -375,6 +384,47 @@ export class Game {
             // Play achievement particle effect
             const playerPosition = this.playerController.getPosition();
             this.particleSystem.playEffect('levelup', playerPosition, 3);
+        });
+
+        // Audio System Integrations
+        this.eventBus.on('combat:playerAttack', () => {
+            this.audioSystem.playSoundEffect('sword_swing');
+        });
+
+        this.eventBus.on('combat:damageDealt', (data: any) => {
+            if (data.target !== 'player') {
+                this.audioSystem.playSoundEffect('sword_hit');
+            } else {
+                this.audioSystem.onPlayerHurt(data.damage.amount);
+            }
+        });
+
+        this.eventBus.on('combat:enemyDefeated', () => {
+            this.audioSystem.onEnemyDeath();
+        });
+
+        this.eventBus.on('interaction:chestOpened', () => {
+            this.audioSystem.onChestOpen();
+        });
+
+        this.eventBus.on('interaction:itemPickedUp', () => {
+            this.audioSystem.onItemPickup();
+        });
+
+        this.eventBus.on('enemy:enemySpawned', () => {
+            // Start combat music when enemies are around
+            if (this.audioSystem.getCurrentMusicTrack() !== 'combat') {
+                this.audioSystem.onCombatStart();
+            }
+        });
+
+        this.eventBus.on('enemy:allEnemiesDefeated', () => {
+            // Return to exploration music when all enemies are defeated
+            this.audioSystem.onCombatEnd();
+        });
+
+        this.eventBus.on('magic:spellCast', () => {
+            this.audioSystem.playSoundEffect('magic_cast');
         });
 
         console.log('🚌 EventBus integrations set up');
@@ -619,6 +669,9 @@ export class Game {
         // Cleanup water system resources
         this.waterSystem.cleanup();
         
+        // Cleanup audio system resources
+        this.audioSystem.cleanup();
+        
         console.log('⏸️ Game stopped');
     }
     
@@ -680,6 +733,9 @@ export class Game {
         
         // Update water system for wave animations and reflections
         this.waterSystem.update(deltaTime);
+        
+        // Update audio system for 3D spatial audio
+        this.audioSystem.update(deltaTime);
         
         // Update scene
         this.sceneManager.update(deltaTime);
