@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { InputManager } from '../core/InputManager';
+import { InputManager } from '@core/InputManager';
 
 export class PlayerController {
     private inputManager: InputManager;

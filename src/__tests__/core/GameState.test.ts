@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
  * Comprehensive tests for GameState class
  * Tests state management, events, serialization, and game logic
  */
-import { GameState, InventoryItem, Quest } from '../../core/GameState';
+import { GameState, InventoryItem, Quest } from '@core/GameState';
 
 describe('GameState', () => {
   let gameState: GameState;

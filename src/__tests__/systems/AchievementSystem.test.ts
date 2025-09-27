@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { AchievementSystem } from '../../systems/AchievementSystem';
+import { AchievementSystem } from '@systems/AchievementSystem';
 
 describe('AchievementSystem', () => {
     let achievementSystem: AchievementSystem;

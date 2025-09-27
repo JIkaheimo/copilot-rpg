@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { UIManager } from '../../ui/UIManager';
-import { GameState } from '../../core/GameState';
+import { UIManager } from '@ui/UIManager';
+import { GameState } from '@core/GameState';
 
 // Mock DOM methods using vi.spyOn
 const mockGetElementById = vi.fn();

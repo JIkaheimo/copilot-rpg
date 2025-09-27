@@ -1,4 +1,4 @@
-import { Game } from './core/Game';
+import { Game } from '@core/Game';
 
 // Global game instance for easy access from HTML
 declare global {

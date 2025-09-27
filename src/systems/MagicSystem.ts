@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { GameState } from '../core/GameState';
-import { ParticleSystem } from './ParticleSystem';
+import { GameState } from '@core/GameState';
+import { ParticleSystem } from '@systems/ParticleSystem';
 
 export interface Spell {
     id: string;

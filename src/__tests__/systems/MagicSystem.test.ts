@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import * as THREE from 'three';
-import { MagicSystem } from '../../systems/MagicSystem';
-import { GameState } from '../../core/GameState';
-import { ParticleSystem } from '../../systems/ParticleSystem';
+import { MagicSystem } from '@systems/MagicSystem';
+import { GameState } from '@core/GameState';
+import { ParticleSystem } from '@systems/ParticleSystem';
 
 // Mock Three.js
 vi.mock('three', () => ({

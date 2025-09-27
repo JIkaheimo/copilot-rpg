@@ -3,8 +3,8 @@ import { describe, it, expect, beforeEach } from 'vitest';
  * Tests for PlayerController class
  * Tests player movement, physics, and camera controls
  */
-import { PlayerController } from '../../systems/PlayerController';
-import { InputManager } from '../../core/InputManager';
+import { PlayerController } from '@systems/PlayerController';
+import { InputManager } from '@core/InputManager';
 import * as THREE from 'three';
 
 // Mock InputManager

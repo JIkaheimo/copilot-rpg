@@ -3,7 +3,7 @@
  * Tests 3D scene management, camera, lighting, and object management
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { SceneManager } from '../../core/SceneManager';
+import { SceneManager } from '@core/SceneManager';
 import * as THREE from 'three';
 
 // Mock WebGLRenderer

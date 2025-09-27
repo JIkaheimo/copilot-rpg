@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import * as THREE from 'three';
-import { LightingSystem, DynamicLight } from '../../systems/LightingSystem';
+import { LightingSystem, DynamicLight } from '@systems/LightingSystem';
 
 // Mock Three.js
 vi.mock('three', async () => {

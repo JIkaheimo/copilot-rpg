@@ -1,4 +1,4 @@
-import { GameState } from '../core/GameState';
+import { GameState } from '@core/GameState';
 
 export interface SaveData {
     version: string;

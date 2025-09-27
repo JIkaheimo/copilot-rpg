@@ -1,5 +1,6 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vite';
+import path from 'path';
 
 export default defineConfig({
   test: {
@@ -33,8 +34,14 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': '/src',
-      'three': '/__tests__/__mocks__/three.ts'
+      '@': path.resolve(__dirname, 'src'),
+      '@core': path.resolve(__dirname, 'src/core'),
+      '@systems': path.resolve(__dirname, 'src/systems'),
+      '@ui': path.resolve(__dirname, 'src/ui'),
+      '@utils': path.resolve(__dirname, 'src/utils'),
+      '@assets': path.resolve(__dirname, 'src/assets'),
+      '@components': path.resolve(__dirname, 'src/components'),
+      'three': path.resolve(__dirname, 'src/__tests__/__mocks__/three.ts')
     }
   }
 });

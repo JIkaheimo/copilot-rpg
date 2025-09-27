@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { InteractionSystem, InteractableObject } from '../../systems/InteractionSystem';
-import { GameState } from '../../core/GameState';
+import { InteractionSystem, InteractableObject } from '@systems/InteractionSystem';
+import { GameState } from '@core/GameState';
 import * as THREE from 'three';
 
 /**
