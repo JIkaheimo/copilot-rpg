@@ -129,8 +129,14 @@ export class Game {
         // Initialize magic system
         this.magicSystem.initialize(this.sceneManager.getScene(), this.gameState, this.particleSystem);
         
-        // Initialize combat and enemy systems
+        // Initialize combat system first
         this.combatSystem.initialize(this.sceneManager.getScene(), this.gameState);
+        
+        // Set up system integrations using EventBus BEFORE initializing enemy system
+        // This ensures event listeners are ready when enemies spawn
+        this.setupEventBusIntegrations();
+        
+        // Initialize enemy and interaction systems (after EventBus setup)
         this.enemySystem.initialize(this.sceneManager.getScene());
         this.interactionSystem.initialize(this.sceneManager.getScene());
         
@@ -140,9 +146,6 @@ export class Game {
         
         // Set up atmospheric world lighting
         this.addWorldLighting();
-        
-        // Set up system integrations using EventBus
-        this.setupEventBusIntegrations();
         
         // Set up player combat input
         this.setupPlayerCombatInput();
@@ -459,7 +462,14 @@ export class Game {
 
     // Public methods for combat interaction
     playerAttack(): boolean {
-        return this.combatSystem.playerAttack();
+        const attackResult = this.combatSystem.playerAttack();
+        
+        // Emit EventBus event for weapon system integration and combat effects
+        if (attackResult) {
+            this.eventBus.emit('combat:playerAttack');
+        }
+        
+        return attackResult;
     }
     
     canPlayerAttack(): boolean {
