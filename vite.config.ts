@@ -35,7 +35,9 @@ export default defineConfig({
             'src/systems/ParticleSystem.ts',
             'src/systems/LightingSystem.ts',
             'src/systems/AtmosphereSystem.ts',
-            'src/systems/LODSystem.ts'
+            'src/systems/LODSystem.ts',
+            'src/systems/WaterSystem.ts',
+            'src/systems/AudioSystem.ts'
           ],
           
           // Gameplay systems
@@ -45,7 +47,8 @@ export default defineConfig({
             'src/systems/PlayerController.ts',
             'src/systems/WeaponSystem.ts',
             'src/systems/MagicSystem.ts',
-            'src/systems/InteractionSystem.ts'
+            'src/systems/InteractionSystem.ts',
+            'src/systems/CraftingSystem.ts'
           ],
           
           // UI components

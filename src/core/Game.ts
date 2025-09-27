@@ -16,6 +16,9 @@ import { WeaponSystem } from '@systems/WeaponSystem';
 import { AchievementSystem } from '@systems/AchievementSystem';
 import { MagicSystem } from '@systems/MagicSystem';
 import { LODSystem } from '@systems/LODSystem';
+import { WaterSystem } from '@systems/WaterSystem';
+import { AudioSystem } from '@systems/AudioSystem';
+import { CraftingSystem } from '@systems/CraftingSystem';
 import { EventBus } from '@core/EventBus';
 
 export class Game {
@@ -39,6 +42,9 @@ export class Game {
     private achievementSystem: AchievementSystem;
     private magicSystem: MagicSystem;
     private lodSystem: LODSystem;
+    private waterSystem: WaterSystem;
+    private audioSystem: AudioSystem;
+    private craftingSystem: CraftingSystem;
     
     private isRunning: boolean = false;
     private lastTime: number = 0;
@@ -81,6 +87,9 @@ export class Game {
         this.achievementSystem = new AchievementSystem();
         this.magicSystem = new MagicSystem();
         this.lodSystem = new LODSystem();
+        this.waterSystem = new WaterSystem();
+        this.audioSystem = new AudioSystem();
+        this.craftingSystem = new CraftingSystem();
         
         // Initialize player controller
         this.playerController = new PlayerController(
@@ -144,6 +153,21 @@ export class Game {
         this.lodSystem.initialize(this.sceneManager.getScene(), this.sceneManager.getCamera());
         this.registerCharacterModelsWithLOD();
         
+        // Initialize water system for realistic water rendering
+        this.waterSystem.initialize(this.sceneManager.getScene(), this.sceneManager.getCamera(), this.renderer);
+        
+        // Initialize audio system for 3D spatial audio
+        this.audioSystem.initialize(this.sceneManager.getScene(), this.sceneManager.getCamera());
+        
+        // Initialize crafting system for item creation
+        this.craftingSystem.initialize(this.sceneManager.getScene(), this.gameState);
+        
+        // Add some starting crafting materials to inventory
+        this.addStartingCraftingMaterials();
+        
+        // Add initial water bodies to the world
+        this.addWorldWater();
+        
         // Set up atmospheric world lighting
         this.addWorldLighting();
         
@@ -155,6 +179,9 @@ export class Game {
         
         // Load saved game if available
         await this.saveSystem.loadGame(this.gameState);
+        
+        // Start background music for exploration
+        this.audioSystem.playBackgroundMusic('exploration', 2000);
         
         console.log('✅ Game systems initialized');
         
@@ -368,6 +395,77 @@ export class Game {
             this.particleSystem.playEffect('levelup', playerPosition, 3);
         });
 
+        // Audio System Integrations
+        this.eventBus.on('combat:playerAttack', () => {
+            this.audioSystem.playSoundEffect('sword_swing');
+        });
+
+        this.eventBus.on('combat:damageDealt', (data: any) => {
+            if (data.target !== 'player') {
+                this.audioSystem.playSoundEffect('sword_hit');
+            } else {
+                this.audioSystem.onPlayerHurt(data.damage.amount);
+            }
+        });
+
+        this.eventBus.on('combat:enemyDefeated', () => {
+            this.audioSystem.onEnemyDeath();
+        });
+
+        this.eventBus.on('interaction:chestOpened', () => {
+            this.audioSystem.onChestOpen();
+        });
+
+        this.eventBus.on('interaction:itemPickedUp', () => {
+            this.audioSystem.onItemPickup();
+        });
+
+        this.eventBus.on('enemy:enemySpawned', () => {
+            // Start combat music when enemies are around
+            if (this.audioSystem.getCurrentMusicTrack() !== 'combat') {
+                this.audioSystem.onCombatStart();
+            }
+        });
+
+        this.eventBus.on('enemy:allEnemiesDefeated', () => {
+            // Return to exploration music when all enemies are defeated
+            this.audioSystem.onCombatEnd();
+        });
+
+        this.eventBus.on('magic:spellCast', () => {
+            this.audioSystem.playSoundEffect('magic_cast');
+        });
+
+        // Crafting System Integrations
+        this.eventBus.on('crafting:completed', (data: any) => {
+            this.uiManager.showNotification(
+                `🔨 Crafted ${data.recipeName}!`,
+                'success'
+            );
+            
+            // Show experience gained
+            if (data.experienceGained > 0) {
+                this.uiManager.showNotification(
+                    `⚡ +${data.experienceGained} ${data.skill} XP`,
+                    'info'
+                );
+            }
+        });
+
+        this.eventBus.on('crafting:started', (data: any) => {
+            this.uiManager.showNotification(
+                `🔨 Crafting ${data.recipeName}... (${data.duration}s)`,
+                'info'
+            );
+        });
+
+        this.eventBus.on('crafting:cancelled', () => {
+            this.uiManager.showNotification(
+                '❌ Crafting cancelled',
+                'warning'
+            );
+        });
+
         console.log('🚌 EventBus integrations set up');
     }
     
@@ -408,6 +506,10 @@ export class Game {
                     event.preventDefault();
                     this.magicSystem.castSpell('shield');
                     break;
+                case 'KeyC':
+                    event.preventDefault();
+                    this.openCraftingInterface();
+                    break;
                 case 'KeyX':
                     event.preventDefault();
                     this.magicSystem.cancelCurrentCast();
@@ -444,6 +546,133 @@ export class Game {
         crystalPositions.forEach((position) => {
             this.lightingSystem.addCrystalAt(position);
         });
+    }
+    
+    private addWorldWater(): void {
+        // Add a central lake for visual appeal and immersion
+        this.waterSystem.createWaterBody({
+            width: 30,
+            height: 30,
+            position: new THREE.Vector3(-10, -0.5, 15),
+            segments: 64,
+            waveHeight: 0.3,
+            waveSpeed: 1.2,
+            color: 0x006994,
+            transparency: 0.8,
+            reflectivity: 0.7,
+            flowDirection: (() => {
+                try {
+                    return new THREE.Vector2(0.3, 0.7);
+                } catch (_error) {
+                    return { x: 0.3, y: 0.7 } as any;
+                }
+            })()
+        });
+        
+        // Add a smaller pond near the spawn area
+        this.waterSystem.createWaterBody({
+            width: 15,
+            height: 12,
+            position: new THREE.Vector3(25, -0.3, -8),
+            segments: 32,
+            waveHeight: 0.2,
+            waveSpeed: 0.8,
+            color: 0x0099CC,
+            transparency: 0.75,
+            reflectivity: 0.6,
+            flowDirection: (() => {
+                try {
+                    return new THREE.Vector2(1, 0);
+                } catch (_error) {
+                    return { x: 1, y: 0 } as any;
+                }
+            })()
+        });
+        
+        // Add a decorative stream
+        this.waterSystem.createWaterBody({
+            width: 40,
+            height: 4,
+            position: new THREE.Vector3(0, -0.4, -25),
+            segments: 48,
+            waveHeight: 0.15,
+            waveSpeed: 1.8,
+            color: 0x004488,
+            transparency: 0.7,
+            reflectivity: 0.5,
+            flowDirection: (() => {
+                try {
+                    return new THREE.Vector2(1, 0.2);
+                } catch (_error) {
+                    return { x: 1, y: 0.2 } as any;
+                }
+            })()
+        });
+        
+        console.log('🌊 World water bodies added');
+    }
+    
+    private addStartingCraftingMaterials(): void {
+        // Add basic crafting materials to get players started
+        const startingMaterials = [
+            {
+                id: 'iron_ingot',
+                name: 'Iron Ingot',
+                type: 'resource' as const,
+                rarity: 'common' as const,
+                quantity: 5,
+                description: 'Refined iron ready for crafting',
+                value: 15
+            },
+            {
+                id: 'wood',
+                name: 'Wood',
+                type: 'resource' as const,
+                rarity: 'common' as const,
+                quantity: 8,
+                description: 'Sturdy wood for crafting',
+                value: 3
+            },
+            {
+                id: 'leather',
+                name: 'Leather',
+                type: 'resource' as const,
+                rarity: 'common' as const,
+                quantity: 3,
+                description: 'Tanned animal hide',
+                value: 8
+            },
+            {
+                id: 'healing_herb',
+                name: 'Healing Herb',
+                type: 'resource' as const,
+                rarity: 'common' as const,
+                quantity: 4,
+                description: 'Natural herb with healing properties',
+                value: 12
+            },
+            {
+                id: 'crystal_essence',
+                name: 'Crystal Essence',
+                type: 'resource' as const,
+                rarity: 'rare' as const,
+                quantity: 2,
+                description: 'Magical essence extracted from crystals',
+                value: 50
+            }
+        ];
+
+        startingMaterials.forEach(material => {
+            this.gameState.addItem({
+                ...material,
+                properties: {
+                    description: material.description,
+                    value: material.value
+                }
+            });
+        });
+
+        console.log('🔨 Starting crafting materials added to inventory');
     }
     
     private setupStartingWeapon(): void {
@@ -498,6 +727,44 @@ export class Game {
         console.log('📂 Game loaded');
     }
     
+    openCraftingInterface(): void {
+        const playerPosition = this.playerController.getPosition();
+        const nearbyStations = this.craftingSystem.getStationsInRange(playerPosition, 10);
+        
+        if (nearbyStations.length === 0) {
+            this.uiManager.showNotification(
+                '🔨 No crafting stations nearby',
+                'warning'
+            );
+            return;
+        }
+        
+        // Get craftable recipes
+        const craftableRecipes = this.craftingSystem.getCraftableRecipes();
+        
+        if (craftableRecipes.length === 0) {
+            this.uiManager.showNotification(
+                '🔨 No recipes available with current materials',
+                'info'
+            );
+        } else {
+            this.uiManager.showNotification(
+                `🔨 Found ${craftableRecipes.length} craftable recipes at nearby stations`,
+                'success'
+            );
+            
+            // In a full implementation, this would open a crafting UI
+            // For now, just show the first available recipe as a demo
+            const firstRecipe = craftableRecipes[0];
+            console.log(`🔨 Available recipe: ${firstRecipe.name} - ${firstRecipe.description}`);
+            
+            // Try to craft the first available recipe as demonstration
+            if (this.craftingSystem.canCraftRecipe(firstRecipe.id)) {
+                this.craftingSystem.startCrafting(firstRecipe.id, playerPosition);
+            }
+        }
+    }
+    
     /**
      * Register character models with LOD system for performance optimization
      */
@@ -542,6 +809,16 @@ export class Game {
             cancelAnimationFrame(this.animationFrameId);
             this.animationFrameId = null;
         }
+        
+        // Cleanup water system resources
+        this.waterSystem.cleanup();
+        
+        // Cleanup audio system resources
+        this.audioSystem.cleanup();
+        
+        // Cleanup crafting system resources
+        this.craftingSystem.cleanup();
+        
         console.log('⏸️ Game stopped');
     }
     
@@ -600,6 +877,15 @@ export class Game {
         // Update LOD system for performance optimization
         this.lodSystem.updatePlayerPosition(playerPosition);
         this.lodSystem.update();
+        
+        // Update water system for wave animations and reflections
+        this.waterSystem.update(deltaTime);
+        
+        // Update audio system for 3D spatial audio
+        this.audioSystem.update(deltaTime);
+        
+        // Update crafting system for recipe progress
+        this.craftingSystem.update(deltaTime);
         
         // Update scene
         this.sceneManager.update(deltaTime);
