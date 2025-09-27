@@ -46,11 +46,13 @@ export class DynamicLight {
         this.light.position.copy(config.position);
         this.light.castShadow = config.castShadow || false;
 
-        if (this.light.castShadow) {
+        if (this.light.castShadow && this.light.shadow) {
             this.light.shadow.mapSize.width = 1024;
             this.light.shadow.mapSize.height = 1024;
-            this.light.shadow.camera.near = 0.1;
-            this.light.shadow.camera.far = config.range || 50;
+            if (this.light.shadow.camera) {
+                this.light.shadow.camera.near = 0.1;
+                this.light.shadow.camera.far = config.range || 50;
+            }
         }
     }
 
@@ -138,14 +140,18 @@ export class LightingSystem {
         this.updateDirectionalLightPosition();
         
         this.directionalLight.castShadow = true;
-        this.directionalLight.shadow.mapSize.width = 4096;
-        this.directionalLight.shadow.mapSize.height = 4096;
-        this.directionalLight.shadow.camera.near = 0.1;
-        this.directionalLight.shadow.camera.far = 200;
-        this.directionalLight.shadow.camera.left = -50;
-        this.directionalLight.shadow.camera.right = 50;
-        this.directionalLight.shadow.camera.top = 50;
-        this.directionalLight.shadow.camera.bottom = -50;
+        if (this.directionalLight.shadow) {
+            this.directionalLight.shadow.mapSize.width = 4096;
+            this.directionalLight.shadow.mapSize.height = 4096;
+            if (this.directionalLight.shadow.camera) {
+                this.directionalLight.shadow.camera.near = 0.1;
+                this.directionalLight.shadow.camera.far = 200;
+                this.directionalLight.shadow.camera.left = -50;
+                this.directionalLight.shadow.camera.right = 50;
+                this.directionalLight.shadow.camera.top = 50;
+                this.directionalLight.shadow.camera.bottom = -50;
+            }
+        }
         
         this.scene.add(this.directionalLight);
     }

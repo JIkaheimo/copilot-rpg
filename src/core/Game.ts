@@ -36,6 +36,7 @@ export class Game {
     
     private isRunning: boolean = false;
     private lastTime: number = 0;
+    private animationFrameId: number | null = null;
     
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
@@ -379,6 +380,10 @@ export class Game {
     
     stop(): void {
         this.isRunning = false;
+        if (this.animationFrameId !== null) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
         console.log('⏸️ Game stopped');
     }
     
@@ -399,7 +404,7 @@ export class Game {
         this.render();
         
         // Continue the loop
-        requestAnimationFrame(() => this.gameLoop());
+        this.animationFrameId = requestAnimationFrame(() => this.gameLoop());
     }
     
     private update(deltaTime: number): void {
