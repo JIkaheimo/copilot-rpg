@@ -13,6 +13,7 @@ import { InteractionSystem } from '../systems/InteractionSystem';
 import { ParticleSystem } from '../systems/ParticleSystem';
 import { LightingSystem } from '../systems/LightingSystem';
 import { WeaponSystem } from '../systems/WeaponSystem';
+import { AchievementSystem } from '../systems/AchievementSystem';
 
 export class Game {
     private canvas: HTMLCanvasElement;
@@ -31,6 +32,7 @@ export class Game {
     private particleSystem: ParticleSystem;
     private lightingSystem: LightingSystem;
     private weaponSystem: WeaponSystem;
+    private achievementSystem: AchievementSystem;
     
     private isRunning: boolean = false;
     private lastTime: number = 0;
@@ -66,6 +68,7 @@ export class Game {
         this.particleSystem = new ParticleSystem();
         this.lightingSystem = new LightingSystem();
         this.weaponSystem = new WeaponSystem();
+        this.achievementSystem = new AchievementSystem();
         
         // Initialize player controller
         this.playerController = new PlayerController(
@@ -102,6 +105,9 @@ export class Game {
         // Initialize weapon system
         this.weaponSystem.initialize();
         
+        // Initialize achievement system
+        this.achievementSystem.initialize();
+        
         // Initialize particle system
         this.particleSystem.initialize(this.sceneManager.getScene());
         
@@ -115,6 +121,7 @@ export class Game {
         this.setupInteractionIntegration();
         this.setupLightingIntegration();
         this.setupWeaponIntegration();
+        this.setupAchievementIntegration();
         
         // Set up player combat input
         this.setupPlayerCombatInput();
@@ -314,6 +321,52 @@ export class Game {
         });
     }
     
+    private setupAchievementIntegration(): void {
+        // Connect achievements to combat events
+        this.combatSystem.on('enemyDefeated', (data: any) => {
+            const enemy = this.enemySystem.getEnemy(data.enemyId);
+            if (enemy) {
+                this.achievementSystem.trackEnemyDefeat(enemy.type, this.gameState.player.level);
+            }
+        });
+        
+        // Connect achievements to level up events
+        this.gameState.on('levelUp', (data: any) => {
+            this.achievementSystem.trackLevelUp(data.newLevel);
+        });
+        
+        // Connect achievements to interaction events
+        this.interactionSystem.on('chestOpened', () => {
+            this.achievementSystem.trackChestOpened();
+        });
+        
+        this.interactionSystem.on('resourceHarvested', (data: any) => {
+            this.achievementSystem.trackResourceGathered(data.resourceType);
+        });
+        
+        // Connect achievement rewards to game state
+        this.achievementSystem.on('rewardXP', (xp: number) => {
+            this.gameState.addExperience(xp);
+        });
+        
+        this.achievementSystem.on('rewardGold', (gold: number) => {
+            // Add gold to inventory when currency system is implemented
+            console.log(`💰 Awarded ${gold} gold from achievement`);
+        });
+        
+        this.achievementSystem.on('achievementUnlocked', (data: any) => {
+            // Show achievement notification
+            this.uiManager.showNotification(
+                `🏆 Achievement Unlocked: ${data.achievement.name}`,
+                'success'
+            );
+            
+            // Play achievement particle effect
+            const playerPosition = this.playerController.getPosition();
+            this.particleSystem.playEffect('levelup', playerPosition, 3);
+        });
+    }
+    
     start(): void {
         if (this.isRunning) return;
         
@@ -459,4 +512,5 @@ export class Game {
     getParticleSystem(): ParticleSystem { return this.particleSystem; }
     getLightingSystem(): LightingSystem { return this.lightingSystem; }
     getWeaponSystem(): WeaponSystem { return this.weaponSystem; }
+    getAchievementSystem(): AchievementSystem { return this.achievementSystem; }
 }

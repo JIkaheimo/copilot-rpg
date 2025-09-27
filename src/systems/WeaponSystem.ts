@@ -320,10 +320,24 @@ export class WeaponSystem {
     private weaponTemplates: Map<string, WeaponData> = new Map();
     private equippedWeapon: WeaponInstance | null = null;
     private weaponInventory: Map<string, WeaponInstance> = new Map();
+    private listeners: { [event: string]: Function[] } = {};
     
     initialize(): void {
         this.createWeaponTemplates();
         console.log('⚔️ Weapon System initialized');
+    }
+
+    // Event handling
+    on(event: string, callback: Function): void {
+        if (!this.listeners[event]) {
+            this.listeners[event] = [];
+        }
+        this.listeners[event].push(callback);
+    }
+
+    private emit(event: string, data?: any): void {
+        if (!this.listeners[event]) return;
+        this.listeners[event].forEach(callback => callback(data));
     }
 
     private createWeaponTemplates(): void {
@@ -486,6 +500,13 @@ export class WeaponSystem {
     addToInventory(weapon: WeaponInstance): void {
         const id = `${weapon.getData().id}_${Date.now()}`;
         this.weaponInventory.set(id, weapon);
+        
+        // Emit weapon obtained event for achievements
+        this.emit('weaponObtained', {
+            weaponId: weapon.getData().id,
+            rarity: weapon.getData().rarity,
+            type: weapon.getData().type
+        });
     }
 
     removeFromInventory(weaponId: string): WeaponInstance | null {
