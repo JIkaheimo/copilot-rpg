@@ -41,6 +41,12 @@ export class LODSystem {
         object: THREE.Object3D, 
         config?: Partial<LODConfig>
     ): void {
+        // Handle null or undefined objects
+        if (!object) {
+            console.warn('🎯 LOD System: Cannot register null object');
+            return;
+        }
+
         const finalConfig: LODConfig = { ...this.defaultConfig, ...config };
         
         const lodObject: LODObject = {
@@ -89,6 +95,11 @@ export class LODSystem {
     }
     
     private simplifyGeometry(geometry: THREE.BufferGeometry, factor: number): THREE.BufferGeometry {
+        // Handle null or invalid geometry
+        if (!geometry || typeof geometry.getAttribute !== 'function') {
+            return new THREE.BufferGeometry();
+        }
+
         // Simple geometry simplification - reduce vertex count
         const positions = geometry.getAttribute('position');
         if (!positions) return geometry.clone();
@@ -146,21 +157,33 @@ export class LODSystem {
     }
     
     private createLowDetailMaterial(originalMaterial: THREE.Material): THREE.Material {
+        // Handle null or undefined material
+        if (!originalMaterial) {
+            return new THREE.MeshBasicMaterial({ color: 0x888888 });
+        }
+
         // Create a simpler material for distant objects
-        if (originalMaterial instanceof THREE.MeshStandardMaterial) {
-            return new THREE.MeshBasicMaterial({
-                color: originalMaterial.color,
-                map: originalMaterial.map,
-                transparent: originalMaterial.transparent,
-                opacity: originalMaterial.opacity
-            });
-        } else if (originalMaterial instanceof THREE.MeshPhongMaterial) {
-            return new THREE.MeshBasicMaterial({
-                color: originalMaterial.color,
-                map: originalMaterial.map,
-                transparent: originalMaterial.transparent,
-                opacity: originalMaterial.opacity
-            });
+        try {
+            if (originalMaterial.constructor.name === 'MeshStandardMaterial') {
+                const standard = originalMaterial as THREE.MeshStandardMaterial;
+                return new THREE.MeshBasicMaterial({
+                    color: standard.color || new THREE.Color(0x888888),
+                    map: standard.map,
+                    transparent: standard.transparent,
+                    opacity: standard.opacity
+                });
+            } else if (originalMaterial.constructor.name === 'MeshPhongMaterial') {
+                const phong = originalMaterial as THREE.MeshPhongMaterial;
+                return new THREE.MeshBasicMaterial({
+                    color: phong.color || new THREE.Color(0x888888),
+                    map: phong.map,
+                    transparent: phong.transparent,
+                    opacity: phong.opacity
+                });
+            }
+        } catch (error) {
+            // Fallback in case of any errors
+            console.warn('🎯 LOD System: Error creating low detail material, using fallback:', error);
         }
         
         // Return a basic material as fallback

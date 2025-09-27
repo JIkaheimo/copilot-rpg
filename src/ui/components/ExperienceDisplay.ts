@@ -23,8 +23,9 @@ export class ExperienceDisplay implements IUIComponent {
 
         const { level, experience, experienceToNext } = gameState.player;
 
-        this.levelText.textContent = level.toString();
-        this.xpText.textContent = `${experience}/${experienceToNext}`;
+        // Handle undefined values gracefully
+        this.levelText.textContent = (level !== undefined ? level : 0).toString();
+        this.xpText.textContent = `${experience !== undefined ? experience : 0}/${experienceToNext !== undefined ? experienceToNext : 0}`;
     }
 
     /**
