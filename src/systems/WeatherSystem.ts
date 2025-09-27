@@ -31,12 +31,13 @@ export class WeatherSystem {
         const effectArea = 50; // Large area for environmental effects
 
         switch (weatherType) {
-            case 'rain':
+            case 'rain': {
                 const rainId = this.particleSystem.createEnvironmentalEffect('rain', playerPosition, effectArea);
                 this.activeWeatherEffects.add(rainId);
                 break;
+            }
                 
-            case 'snow':
+            case 'snow': {
                 const snowId = this.particleSystem.createEnvironmentalEffect('snow', playerPosition, effectArea);
                 this.activeWeatherEffects.add(snowId);
                 
@@ -44,13 +45,15 @@ export class WeatherSystem {
                 const fogId = this.particleSystem.createEnvironmentalEffect('fog', playerPosition, effectArea * 0.5);
                 this.activeWeatherEffects.add(fogId);
                 break;
+            }
                 
-            case 'fog':
+            case 'fog': {
                 const fogOnlyId = this.particleSystem.createEnvironmentalEffect('fog', playerPosition, effectArea);
                 this.activeWeatherEffects.add(fogOnlyId);
                 break;
+            }
                 
-            case 'storm':
+            case 'storm': {
                 const stormRainId = this.particleSystem.createEnvironmentalEffect('rain', playerPosition, effectArea);
                 const dustId = this.particleSystem.createEnvironmentalEffect('dust', playerPosition, effectArea * 0.3);
                 this.activeWeatherEffects.add(stormRainId);
@@ -64,14 +67,16 @@ export class WeatherSystem {
                     this.scene.fog = new THREE.Fog(0x666666, 10, 60);
                 }
                 break;
+            }
                 
-            case 'clear':
+            case 'clear': {
                 // Maybe add some light dust particles for atmosphere
                 if (Math.random() > 0.7) {
                     const dustId2 = this.particleSystem.createEnvironmentalEffect('dust', playerPosition, effectArea * 0.2);
                     this.activeWeatherEffects.add(dustId2);
                 }
                 break;
+            }
         }
     }
 
