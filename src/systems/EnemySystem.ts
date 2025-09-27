@@ -482,10 +482,11 @@ export class EnemySystem extends EventEmitter {
             case 'chasing':
                 AnimationPresets.createWalkingAnimation(`${animationId}_chasing`, enemy.mesh, 1.5);
                 break;
-            case 'attacking':
+            case 'attacking': {
                 const attackType = enemy.type === 'wolf' ? 'thrust' : 'swing';
                 AnimationPresets.createAttackAnimation(`${animationId}_attacking`, enemy.mesh, attackType);
                 break;
+            }
         }
         
         // Update animation system state

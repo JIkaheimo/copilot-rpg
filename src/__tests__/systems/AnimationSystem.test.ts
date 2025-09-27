@@ -271,7 +271,7 @@ describe('AnimationSystem', () => {
             );
 
             // Both should be added initially
-            let stats = animationSystem.getStats();
+            const stats = animationSystem.getStats();
             expect(stats.totalAnimations).toBe(2);
         });
     });
