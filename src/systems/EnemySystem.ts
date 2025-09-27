@@ -226,7 +226,18 @@ export class EnemySystem {
         const canvas = document.createElement('canvas');
         canvas.width = 128;
         canvas.height = 128;
-        const ctx = canvas.getContext('2d')!;
+        const ctx = canvas.getContext('2d');
+        
+        // Additional fallback if canvas context is not available
+        if (!ctx || typeof ctx.createImageData !== 'function') {
+            // Use basic texture as final fallback
+            const texture = new THREE.Texture();
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.needsUpdate = true;
+            (texture as any).fallbackColor = baseColor;
+            return texture;
+        }
         
         const imageData = ctx.createImageData(128, 128);
         const data = imageData.data;

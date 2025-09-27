@@ -25,7 +25,9 @@ export class TextureGenerator {
     static generateGrassTexture(size: number = 512): THREE.Texture {
         // Fallback for test environment
         if (!this.canvas || !this.ctx || typeof this.ctx.createImageData !== 'function') {
-            return this.createFallbackTexture(0x228B22);
+            const texture = this.createFallbackTexture(0x228B22);
+            texture.repeat.set(20, 20); // Tile the texture
+            return texture;
         }
         
         this.canvas.width = size;
@@ -313,7 +315,27 @@ export class TextureGenerator {
      * Create a fallback texture for test environments
      */
     private static createFallbackTexture(color: number): THREE.Texture {
-        // Create a simple 1x1 texture for testing/fallback
+        try {
+            // Try to create a DataTexture first (for proper environments)
+            if (typeof THREE.DataTexture === 'function') {
+                const data = new Uint8Array(4); // 1x1 RGBA
+                const r = (color >> 16) & 0xFF;
+                const g = (color >> 8) & 0xFF;  
+                const b = color & 0xFF;
+                
+                data[0] = r; data[1] = g; data[2] = b; data[3] = 255;
+                
+                const texture = new THREE.DataTexture(data, 1, 1, THREE.RGBAFormat);
+                texture.wrapS = THREE.RepeatWrapping;
+                texture.wrapT = THREE.RepeatWrapping;
+                texture.needsUpdate = true;
+                return texture;
+            }
+        } catch (e) {
+            // Fall through to basic texture
+        }
+        
+        // Fallback to basic texture for test environments
         const texture = new THREE.Texture();
         texture.wrapS = THREE.RepeatWrapping;
         texture.wrapT = THREE.RepeatWrapping;

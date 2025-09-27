@@ -549,7 +549,37 @@ export class SpotLight extends Light {
   }
 }
 
+export class Texture {
+  wrapS: any = RepeatWrapping;
+  wrapT: any = RepeatWrapping;
+  repeat = { x: 1, y: 1, set: (x: number, y: number) => { this.repeat.x = x; this.repeat.y = y; } };
+  needsUpdate: boolean = false;
+  fallbackColor?: number;
+
+  constructor() {
+    this.needsUpdate = false;
+  }
+
+  dispose(): void {
+    // Mock implementation
+  }
+}
+
+export class CanvasTexture extends Texture {
+  constructor(_canvas: HTMLCanvasElement) {
+    super();
+  }
+}
+
+export class DataTexture extends Texture {
+  constructor(_data: ArrayLike<number>, _width: number, _height: number, _format?: any) {
+    super();
+  }
+}
+
 // Constants
 export const PCFSoftShadowMap = 'PCFSoftShadowMap';
 export const SRGBColorSpace = 'srgb';
 export const ACESFilmicToneMapping = 'ACESFilmicToneMapping';
+export const RepeatWrapping = 'RepeatWrapping';
+export const RGBAFormat = 'RGBAFormat';
