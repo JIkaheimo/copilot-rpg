@@ -165,7 +165,7 @@ export class CharacterModelGenerator {
         return head;
     }
 
-    private static createArm(config: CharacterModelConfig, _side: 'left' | 'right'): THREE.Group {
+    private static createArm(config: CharacterModelConfig, side: 'left' | 'right'): THREE.Group {
         const arm = new THREE.Group();
 
         // Upper arm
@@ -204,12 +204,18 @@ export class CharacterModelGenerator {
         });
         const handMesh = new THREE.Mesh(handGeometry, handMaterial);
         handMesh.position.y = -0.7;
+        
+        // Add slight variation based on side for asymmetry
+        if (side === 'right') {
+            handMesh.position.z += 0.01; // Slight forward position for right hand
+        }
+        
         arm.add(handMesh);
 
         return arm;
     }
 
-    private static createLeg(config: CharacterModelConfig, _side: 'left' | 'right'): THREE.Group {
+    private static createLeg(config: CharacterModelConfig, side: 'left' | 'right'): THREE.Group {
         const leg = new THREE.Group();
 
         // Upper leg
@@ -246,6 +252,12 @@ export class CharacterModelGenerator {
         });
         const footMesh = new THREE.Mesh(footGeometry, bootMaterial);
         footMesh.position.set(0, -0.68, 0.05);
+        
+        // Add slight variation based on side for asymmetry
+        if (side === 'left') {
+            footMesh.rotation.y += 0.02; // Slight toe-out for left foot
+        }
+        
         leg.add(footMesh);
 
         return leg;
@@ -592,8 +604,10 @@ export class CharacterModelGenerator {
         return TextureGenerator.generateMetalTexture(64, skinTone);
     }
 
-    private static generateClothTexture(_clothColor: number): THREE.Texture {
-        return TextureGenerator.generateWoodTexture(64);
+    private static generateClothTexture(clothColor: number): THREE.Texture {
+        // Use cloth color for texture variation
+        // Generate a texture based on the cloth color
+        return TextureGenerator.generateMetalTexture(64, clothColor);
     }
 
     /**

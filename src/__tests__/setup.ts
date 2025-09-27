@@ -82,6 +82,7 @@ Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
 
 // Mock requestAnimationFrame for testing
 global.requestAnimationFrame = vi.fn((cb) => {
+    // Use setTimeout with fake timers for proper cleanup
     const id = setTimeout(cb, 16);
     return id as number;
 });
