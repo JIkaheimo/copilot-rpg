@@ -1,5 +1,12 @@
 // Vitest setup file for testing environment
 import { vi } from 'vitest';
+import failOnConsole from 'vitest-fail-on-console';
+
+// Configure vitest-fail-on-console to fail tests on error and warn
+failOnConsole({
+  failOnWarn: true,
+  failOnError: true,
+});
 
 // Mock navigator.getGamepads for testing
 Object.defineProperty(global, 'navigator', {
