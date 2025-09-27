@@ -191,10 +191,30 @@ describe('Game', () => {
             const combatSystem = game.getCombatSystem();
             const playerAttackSpy = vi.spyOn(combatSystem, 'playerAttack').mockReturnValue(true);
             
+            // Mock EventBus to verify event emission
+            const eventBus = (game as any).eventBus;
+            const eventBusEmitSpy = vi.spyOn(eventBus, 'emit');
+            
             const result = game.playerAttack();
             
             expect(playerAttackSpy).toHaveBeenCalled();
             expect(result).toBe(true);
+            expect(eventBusEmitSpy).toHaveBeenCalledWith('combat:playerAttack');
+        });
+
+        it('should not emit combat event when attack fails', () => {
+            const combatSystem = game.getCombatSystem();
+            const playerAttackSpy = vi.spyOn(combatSystem, 'playerAttack').mockReturnValue(false);
+            
+            // Mock EventBus to verify event is not emitted
+            const eventBus = (game as any).eventBus;
+            const eventBusEmitSpy = vi.spyOn(eventBus, 'emit');
+            
+            const result = game.playerAttack();
+            
+            expect(playerAttackSpy).toHaveBeenCalled();
+            expect(result).toBe(false);
+            expect(eventBusEmitSpy).not.toHaveBeenCalledWith('combat:playerAttack');
         });
 
         it('should check if player can attack', () => {

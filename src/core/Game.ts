@@ -459,7 +459,14 @@ export class Game {
 
     // Public methods for combat interaction
     playerAttack(): boolean {
-        return this.combatSystem.playerAttack();
+        const attackResult = this.combatSystem.playerAttack();
+        
+        // Emit EventBus event for weapon system integration and combat effects
+        if (attackResult) {
+            this.eventBus.emit('combat:playerAttack');
+        }
+        
+        return attackResult;
     }
     
     canPlayerAttack(): boolean {
