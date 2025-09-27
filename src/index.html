@@ -122,11 +122,22 @@
                 <div class="health-bar-fill" id="healthBar"></div>
             </div>
             <div>Health: <span id="healthText">100/100</span></div>
+            <div class="health-bar" style="background: #003366;">
+                <div class="health-bar-fill" id="manaBar" style="background: linear-gradient(90deg, #0066cc, #0088ff);"></div>
+            </div>
+            <div>Mana: <span id="manaText">100/100</span></div>
             <div>Level: <span id="levelText">1</span></div>
             <div>XP: <span id="xpText">0/100</span></div>
             <div id="combatInfo" style="margin-top: 10px; color: #ffcc00;">
                 <div>Enemies nearby: <span id="enemyCount">0</span></div>
                 <div id="attackCooldown" style="display: none;">Attack ready in: <span id="cooldownTime">0.0</span>s</div>
+            </div>
+            <div id="magicInfo" style="margin-top: 10px; color: #8866ff;">
+                <div id="castingInfo" style="display: none;">Casting <span id="spellName"></span>: <span id="castProgress">0</span>%</div>
+                <div id="spellHotkeys" style="font-size: 12px; margin-top: 5px;">
+                    <div>Spells: 1-Fireball, 2-Heal, 3-Lightning, 4-Ice, 5-Shield</div>
+                    <div>X-Cancel Cast</div>
+                </div>
             </div>
             <div id="interactionInfo" style="margin-top: 10px; color: #00ff88;">
                 <div id="interactionPrompt" style="display: none;">Press E to interact with <span id="interactableName"></span></div>
@@ -152,6 +163,7 @@
                 <p>WASD - Move | Shift - Run | Space - Jump</p>
                 <p>F Key or Left Click - Attack</p>
                 <p>E Key or Right Click - Interact</p>
+                <p>1-5 Keys - Cast Spells | X - Cancel Spell</p>
                 <p>Mouse - Look around | ESC - Menu</p>
             </div>
         </div>

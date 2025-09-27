@@ -82,7 +82,7 @@ export default [
     },
     rules: {
       'no-unused-vars': 'off',
-      '@typescript-eslint/no-unused-vars': 'off', // Allow unused vars in tests
+      '@typescript-eslint/no-unused-vars': 'off', // Allow unused vars in tests and systems
       'prefer-const': 'error',
       'no-var': 'error',
       'no-undef': 'off',

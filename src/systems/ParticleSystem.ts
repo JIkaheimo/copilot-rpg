@@ -266,6 +266,147 @@ export class ParticleSystem {
             gravity: new THREE.Vector3(0, -1, 0),
             fadeOut: true
         });
+
+        // Magic System Effects
+        
+        // Fireball effect
+        this.effectTemplates.set('fireball', {
+            particleCount: 100,
+            color: 0xff4400,
+            size: 0.2,
+            lifetime: 1.5,
+            spread: 0.8,
+            velocity: new THREE.Vector3(0, 2, 0),
+            gravity: new THREE.Vector3(0, -1, 0),
+            fadeOut: true
+        });
+
+        // Fire explosion effect
+        this.effectTemplates.set('explosion', {
+            particleCount: 150,
+            color: 0xff2200,
+            size: 0.25,
+            lifetime: 1.0,
+            spread: 3,
+            velocity: new THREE.Vector3(0, 3, 0),
+            gravity: new THREE.Vector3(0, -2, 0),
+            fadeOut: true
+        });
+
+        // Healing effect
+        this.effectTemplates.set('heal', {
+            particleCount: 80,
+            color: 0x44ff44,
+            size: 0.15,
+            lifetime: 2.0,
+            spread: 1.5,
+            velocity: new THREE.Vector3(0, 1.5, 0),
+            gravity: new THREE.Vector3(0, 0.5, 0),
+            fadeOut: true
+        });
+
+        // Lightning effect
+        this.effectTemplates.set('lightning', {
+            particleCount: 60,
+            color: 0xccccff,
+            size: 0.12,
+            lifetime: 0.3,
+            spread: 2,
+            velocity: new THREE.Vector3(0, 5, 0),
+            gravity: new THREE.Vector3(0, -10, 0),
+            fadeOut: true
+        });
+
+        // Ice effect
+        this.effectTemplates.set('ice', {
+            particleCount: 70,
+            color: 0x88ddff,
+            size: 0.18,
+            lifetime: 1.2,
+            spread: 1.2,
+            velocity: new THREE.Vector3(0, 1, 0),
+            gravity: new THREE.Vector3(0, -3, 0),
+            fadeOut: true
+        });
+
+        // Shield effect
+        this.effectTemplates.set('shield', {
+            particleCount: 120,
+            color: 0x4444ff,
+            size: 0.1,
+            lifetime: 1.5,
+            spread: 2.5,
+            velocity: new THREE.Vector3(0, 0.5, 0),
+            gravity: new THREE.Vector3(0, 0, 0),
+            fadeOut: true
+        });
+
+        // Casting effects for different schools
+        this.effectTemplates.set('casting_fire', {
+            particleCount: 40,
+            color: 0xff6600,
+            size: 0.08,
+            lifetime: 0.8,
+            spread: 0.5,
+            velocity: new THREE.Vector3(0, 2, 0),
+            gravity: new THREE.Vector3(0, 0, 0),
+            fadeOut: true
+        });
+
+        this.effectTemplates.set('casting_ice', {
+            particleCount: 40,
+            color: 0x66ddff,
+            size: 0.08,
+            lifetime: 0.8,
+            spread: 0.5,
+            velocity: new THREE.Vector3(0, 1, 0),
+            gravity: new THREE.Vector3(0, 0, 0),
+            fadeOut: true
+        });
+
+        this.effectTemplates.set('casting_lightning', {
+            particleCount: 50,
+            color: 0xffffcc,
+            size: 0.06,
+            lifetime: 0.5,
+            spread: 0.8,
+            velocity: new THREE.Vector3(0, 4, 0),
+            gravity: new THREE.Vector3(0, 0, 0),
+            fadeOut: true
+        });
+
+        this.effectTemplates.set('casting_holy', {
+            particleCount: 60,
+            color: 0xffffdd,
+            size: 0.1,
+            lifetime: 1.0,
+            spread: 1.0,
+            velocity: new THREE.Vector3(0, 1.5, 0),
+            gravity: new THREE.Vector3(0, 0.5, 0),
+            fadeOut: true
+        });
+
+        this.effectTemplates.set('casting_shadow', {
+            particleCount: 35,
+            color: 0x440044,
+            size: 0.12,
+            lifetime: 1.2,
+            spread: 0.7,
+            velocity: new THREE.Vector3(0, 0.5, 0),
+            gravity: new THREE.Vector3(0, -0.5, 0),
+            fadeOut: true
+        });
+
+        this.effectTemplates.set('casting_nature', {
+            particleCount: 45,
+            color: 0x44aa44,
+            size: 0.09,
+            lifetime: 1.0,
+            spread: 0.8,
+            velocity: new THREE.Vector3(0, 1, 0),
+            gravity: new THREE.Vector3(0, 0, 0),
+            fadeOut: true
+        });
     }
 
     playEffect(effectName: string, position: THREE.Vector3, duration: number = 0): string {
