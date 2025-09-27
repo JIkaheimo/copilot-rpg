@@ -165,7 +165,7 @@ export class CharacterModelGenerator {
         return head;
     }
 
-    private static createArm(config: CharacterModelConfig, side: 'left' | 'right'): THREE.Group {
+    private static createArm(config: CharacterModelConfig, _side: 'left' | 'right'): THREE.Group {
         const arm = new THREE.Group();
 
         // Upper arm
@@ -209,7 +209,7 @@ export class CharacterModelGenerator {
         return arm;
     }
 
-    private static createLeg(config: CharacterModelConfig, side: 'left' | 'right'): THREE.Group {
+    private static createLeg(config: CharacterModelConfig, _side: 'left' | 'right'): THREE.Group {
         const leg = new THREE.Group();
 
         // Upper leg
@@ -493,15 +493,14 @@ export class CharacterModelGenerator {
             roughness: 0.9,
             metalness: 0.0
         });
-        const arc = new THREE.Mesh(arcGeometry, arcMaterial);
         
         // Create a curved bow shape using multiple segments
-        const leftArc = arc.clone();
+        const leftArc = new THREE.Mesh(arcGeometry, arcMaterial);
         leftArc.position.x = -0.15;
         leftArc.rotation.z = Math.PI / 6;
         bow.add(leftArc);
         
-        const rightArc = arc.clone();
+        const rightArc = new THREE.Mesh(arcGeometry, arcMaterial);
         rightArc.position.x = 0.15;
         rightArc.rotation.z = -Math.PI / 6;
         bow.add(rightArc);
@@ -593,7 +592,7 @@ export class CharacterModelGenerator {
         return TextureGenerator.generateMetalTexture(64, skinTone);
     }
 
-    private static generateClothTexture(clothColor: number): THREE.Texture {
+    private static generateClothTexture(_clothColor: number): THREE.Texture {
         return TextureGenerator.generateWoodTexture(64);
     }
 

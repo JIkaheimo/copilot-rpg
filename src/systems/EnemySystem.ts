@@ -185,7 +185,7 @@ export class EnemySystem extends EventEmitter {
     /**
      * Create a wolf model - different from humanoid characters
      */
-    private createWolfModel(enemyType: any, level: number): THREE.Group {
+    private createWolfModel(_enemyType: any, level: number): THREE.Group {
         const wolf = new THREE.Group();
         
         // Wolf body (elongated)

@@ -15,6 +15,7 @@ import { LightingSystem } from '@systems/LightingSystem';
 import { WeaponSystem } from '@systems/WeaponSystem';
 import { AchievementSystem } from '@systems/AchievementSystem';
 import { MagicSystem } from '@systems/MagicSystem';
+import { LODSystem } from '@systems/LODSystem';
 import { EventBus } from '@core/EventBus';
 
 export class Game {
@@ -37,6 +38,7 @@ export class Game {
     private weaponSystem: WeaponSystem;
     private achievementSystem: AchievementSystem;
     private magicSystem: MagicSystem;
+    private lodSystem: LODSystem;
     
     private isRunning: boolean = false;
     private lastTime: number = 0;
@@ -78,6 +80,7 @@ export class Game {
         this.weaponSystem = new WeaponSystem();
         this.achievementSystem = new AchievementSystem();
         this.magicSystem = new MagicSystem();
+        this.lodSystem = new LODSystem();
         
         // Initialize player controller
         this.playerController = new PlayerController(
@@ -127,6 +130,10 @@ export class Game {
         this.combatSystem.initialize(this.sceneManager.getScene(), this.gameState);
         this.enemySystem.initialize(this.sceneManager.getScene());
         this.interactionSystem.initialize(this.sceneManager.getScene());
+        
+        // Initialize LOD system and register character models for performance optimization
+        this.lodSystem.initialize(this.sceneManager.getScene(), this.sceneManager.getCamera());
+        this.registerCharacterModelsWithLOD();
         
         // Set up atmospheric world lighting
         this.addWorldLighting();
@@ -466,6 +473,34 @@ export class Game {
         console.log('📂 Game loaded');
     }
     
+    /**
+     * Register character models with LOD system for performance optimization
+     */
+    private registerCharacterModelsWithLOD(): void {
+        // Register player character
+        const player = this.playerController.getPlayer();
+        this.lodSystem.registerObject('player', player, {
+            highDetail: 15,   // Player should be detailed up close
+            mediumDetail: 30,
+            lowDetail: 60,
+            cullDistance: 100
+        });
+        
+        // Register enemy characters
+        this.enemySystem.getAllEnemies().forEach((enemy, index) => {
+            if (enemy.mesh) {
+                this.lodSystem.registerObject(`enemy_${index}`, enemy.mesh, {
+                    highDetail: 20,   // Enemies can be slightly less detailed
+                    mediumDetail: 40,
+                    lowDetail: 80,
+                    cullDistance: 120
+                });
+            }
+        });
+        
+        console.log('🎯 Character models registered with LOD system for performance optimization');
+    }
+    
     start(): void {
         if (this.isRunning) return;
         
@@ -536,6 +571,10 @@ export class Game {
         this.combatSystem.update(deltaTime);
         this.enemySystem.update(deltaTime, playerPosition);
         this.interactionSystem.update(deltaTime);
+        
+        // Update LOD system for performance optimization
+        this.lodSystem.updatePlayerPosition(playerPosition);
+        this.lodSystem.update();
         
         // Update scene
         this.sceneManager.update(deltaTime);

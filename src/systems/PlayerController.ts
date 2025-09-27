@@ -7,7 +7,6 @@ export class PlayerController {
     private inputManager: InputManager;
     private camera: THREE.PerspectiveCamera;
     private player!: THREE.Group;
-    private playerMesh!: THREE.Mesh;
     private velocity: THREE.Vector3;
     private isGrounded: boolean = true;
     private mobileControls: MobileControls;
@@ -51,9 +50,6 @@ export class PlayerController {
                 helmet: 'none'
             }
         });
-        
-        // Store reference to the main mesh for compatibility
-        this.playerMesh = this.player.children[0] as THREE.Mesh;
         
         // Set initial position
         this.player.position.set(0, 0, 0);
