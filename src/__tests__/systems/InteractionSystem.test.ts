@@ -79,7 +79,7 @@ describe('InteractionSystem', () => {
             
             expect(chestId).toBeTruthy();
             expect(consoleSpy).toHaveBeenCalledWith(
-                '📦 Spawned treasure chest at position',
+                '🎯 Added chest: Treasure Chest at position',
                 expect.any(THREE.Vector3)
             );
             
@@ -117,7 +117,7 @@ describe('InteractionSystem', () => {
             expect(chest?.data.opened).toBe(true);
             expect(chest?.isInteractable).toBe(false);
             
-            expect(consoleSpy).toHaveBeenCalledWith('📦 Found: Gold Coin x5');
+            expect(consoleSpy).toHaveBeenCalledWith('📦 Found: Gold Coin');
             expect(eventSpy).toHaveBeenCalledWith({
                 chestId,
                 items: testItems
@@ -162,7 +162,7 @@ describe('InteractionSystem', () => {
             
             expect(nodeId).toBeTruthy();
             expect(consoleSpy).toHaveBeenCalledWith(
-                '🌳 Spawned tree resource node at position',
+                '🎯 Added resource: Tree at position',
                 expect.any(THREE.Vector3)
             );
             

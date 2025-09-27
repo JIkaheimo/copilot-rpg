@@ -45,12 +45,11 @@ export class GameSystemManager {
     private updatableSystems: IUpdatable[] = [];
     private cleanableSystems: ICleanable[] = [];
     
-    private eventBus: EventBus;
     private sceneManager: SceneManager;
     private gameState: GameState;
     
-    constructor(eventBus: EventBus, sceneManager: SceneManager, gameState: GameState) {
-        this.eventBus = eventBus;
+    constructor(_eventBus: EventBus, sceneManager: SceneManager, gameState: GameState) {
+        // EventBus available for future use in system communication
         this.sceneManager = sceneManager;
         this.gameState = gameState;
         

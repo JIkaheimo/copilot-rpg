@@ -127,6 +127,18 @@ export class InteractionSystem extends EventEmitter {
         if (interactable.onInteract) {
             interactable.onInteract(gameState);
             this.emit('objectInteracted', { objectId, object: interactable });
+            
+            // Emit specific events for different object types
+            if (interactable.type === 'chest') {
+                this.emit('chestOpened', { chestId: objectId, items: interactable.data?.items || [] });
+            } else if (interactable.type === 'resource') {
+                this.emit('resourceHarvested', { 
+                    nodeId: objectId, 
+                    resourceType: interactable.data?.resourceType || 'unknown',
+                    remaining: (interactable.data?.maxHarvest || 0) - (interactable.data?.harvestCount || 0)
+                });
+            }
+            
             return true;
         }
         
@@ -165,5 +177,6 @@ export class InteractionSystem extends EventEmitter {
             this.removeInteractable(id);
         }
         this.interactables.clear();
+        console.log('🎯 Interaction system cleaned up');
     }
 }
