@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { CombatSystem, CombatEntity, DamageData } from '../../systems/CombatSystem';
-import { GameState } from '../../core/GameState';
+import { CombatSystem, CombatEntity, DamageData } from '@systems/CombatSystem';
+import { GameState } from '@core/GameState';
 import * as THREE from 'three';
 
 /**

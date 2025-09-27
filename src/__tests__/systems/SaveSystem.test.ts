@@ -3,8 +3,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
  * Tests for SaveSystem class
  * Tests game persistence, save/load functionality
  */
-import { SaveSystem } from '../../systems/SaveSystem';
-import { GameState } from '../../core/GameState';
+import { SaveSystem } from '@systems/SaveSystem';
+import { GameState } from '@core/GameState';
 
 // Mock localStorage
 const mockLocalStorage = {

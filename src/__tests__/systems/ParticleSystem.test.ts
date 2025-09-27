@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import * as THREE from 'three';
-import { ParticleSystem, ParticleEffect } from '../../systems/ParticleSystem';
+import { ParticleSystem, ParticleEffect } from '@systems/ParticleSystem';
 
 // Mock Three.js
 vi.mock('three', async () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { EnemySystem, EnemyData } from '../../systems/EnemySystem';
+import { EnemySystem, EnemyData } from '@systems/EnemySystem';
 import * as THREE from 'three';
 
 /**

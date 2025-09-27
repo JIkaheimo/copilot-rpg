@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { WeatherSystem, WeatherType } from '../../systems/WeatherSystem';
+import { WeatherSystem, WeatherType } from '@systems/WeatherSystem';
 import * as THREE from 'three';
 
 // Mock Three.js

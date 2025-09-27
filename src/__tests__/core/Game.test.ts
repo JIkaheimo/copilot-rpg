@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { Game } from '../../core/Game';
+import { Game } from '@core/Game';
 
 /**
  * Comprehensive tests for Game core class

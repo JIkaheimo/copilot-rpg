@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
  * Comprehensive tests for DayNightCycle system
  * Tests time progression, lighting changes, and day/night cycle logic
  */
-import { DayNightCycle } from '../../systems/DayNightCycle';
+import { DayNightCycle } from '@systems/DayNightCycle';
 import * as THREE from 'three';
 
 describe('DayNightCycle', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { InputManager, InputState } from '../../core/InputManager';
+import { InputManager, InputState } from '@core/InputManager';
 
 // Mock canvas and DOM methods
 const mockCanvas = {

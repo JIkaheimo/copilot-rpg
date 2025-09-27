@@ -1,20 +1,20 @@
 import * as THREE from 'three';
-import { SceneManager } from './SceneManager';
-import { InputManager } from './InputManager';
-import { UIManager } from '../ui/UIManager';
-import { PlayerController } from '../systems/PlayerController';
-import { GameState } from './GameState';
-import { WeatherSystem } from '../systems/WeatherSystem';
-import { DayNightCycle } from '../systems/DayNightCycle';
-import { SaveSystem } from '../systems/SaveSystem';
-import { CombatSystem } from '../systems/CombatSystem';
-import { EnemySystem } from '../systems/EnemySystem';
-import { InteractionSystem } from '../systems/InteractionSystem';
-import { ParticleSystem } from '../systems/ParticleSystem';
-import { LightingSystem } from '../systems/LightingSystem';
-import { WeaponSystem } from '../systems/WeaponSystem';
-import { AchievementSystem } from '../systems/AchievementSystem';
-import { MagicSystem } from '../systems/MagicSystem';
+import { SceneManager } from '@core/SceneManager';
+import { InputManager } from '@core/InputManager';
+import { UIManager } from '@ui/UIManager';
+import { PlayerController } from '@systems/PlayerController';
+import { GameState } from '@core/GameState';
+import { WeatherSystem } from '@systems/WeatherSystem';
+import { DayNightCycle } from '@systems/DayNightCycle';
+import { SaveSystem } from '@systems/SaveSystem';
+import { CombatSystem } from '@systems/CombatSystem';
+import { EnemySystem } from '@systems/EnemySystem';
+import { InteractionSystem } from '@systems/InteractionSystem';
+import { ParticleSystem } from '@systems/ParticleSystem';
+import { LightingSystem } from '@systems/LightingSystem';
+import { WeaponSystem } from '@systems/WeaponSystem';
+import { AchievementSystem } from '@systems/AchievementSystem';
+import { MagicSystem } from '@systems/MagicSystem';
 
 export class Game {
     private canvas: HTMLCanvasElement;

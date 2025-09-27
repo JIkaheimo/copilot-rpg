@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import * as THREE from 'three';
-import { WeaponSystem, WeaponInstance } from '../../systems/WeaponSystem';
+import { WeaponSystem, WeaponInstance } from '@systems/WeaponSystem';
 
 // Mock Three.js
 vi.mock('three', async () => {
