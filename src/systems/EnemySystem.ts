@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { EventEmitter } from '@core/EventEmitter';
+import { CharacterModelGenerator } from '@utils/CharacterModelGenerator';
 
 export interface EnemyData {
     id: string;
@@ -154,59 +155,170 @@ export class EnemySystem extends EventEmitter {
     }
     
     private createEnemyMesh(enemyType: any, level: number): THREE.Object3D {
-        const group = new THREE.Group();
+        // Handle special case for wolves - they need a different model type
+        if (enemyType.name && enemyType.name.toLowerCase().includes('wolf')) {
+            return this.createWolfModel(enemyType, level);
+        }
         
-        // Generate a skin texture based on enemy type
-        const skinTexture = this.generateEnemySkinTexture(enemyType.color);
+        // Use the character model generator for humanoid enemies
+        const characterModel = CharacterModelGenerator.generateEnemyModel(enemyType.name || 'default', level);
         
-        // Main body
-        const bodyGeometry = new THREE.CapsuleGeometry(0.3, 1.2, 4, 8);
-        const bodyMaterial = new THREE.MeshStandardMaterial({ 
-            map: skinTexture,
-            color: enemyType.color,
-            roughness: 0.6,
-            metalness: 0.0
-        });
-        const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-        body.position.y = 0.6;
-        body.castShadow = true;
-        body.receiveShadow = true;
-        group.add(body);
-        
-        // Level indicator (small sphere on top)
+        // Add level indicator if above level 1
         if (level > 1) {
-            const levelGeometry = new THREE.SphereGeometry(0.1, 6, 6);
+            const levelGeometry = new THREE.SphereGeometry(0.08, 6, 6);
             const levelMaterial = new THREE.MeshStandardMaterial({ 
                 color: 0xffff00,
                 emissive: 0xffff00,
-                emissiveIntensity: 0.3,
+                emissiveIntensity: 0.4,
                 metalness: 0.0,
-                roughness: 0.5
+                roughness: 0.3
             });
             const levelIndicator = new THREE.Mesh(levelGeometry, levelMaterial);
-            levelIndicator.position.y = 1.5;
-            group.add(levelIndicator);
+            levelIndicator.position.y = 2.2; // Above character head
+            characterModel.add(levelIndicator);
         }
         
-        // Glowing eyes
-        const eyeGeometry = new THREE.SphereGeometry(0.05, 4, 4);
-        const eyeMaterial = new THREE.MeshStandardMaterial({ 
-            color: 0xff0000,
-            emissive: 0xff0000,
-            emissiveIntensity: 0.8,
+        console.log(`👹 Created enhanced ${enemyType.name} character model (Level ${level})`);
+        return characterModel;
+    }
+    
+    /**
+     * Create a wolf model - different from humanoid characters
+     */
+    private createWolfModel(_enemyType: any, level: number): THREE.Group {
+        const wolf = new THREE.Group();
+        
+        // Wolf body (elongated)
+        const bodyGeometry = new THREE.BoxGeometry(0.6, 0.3, 1.2);
+        const furTexture = this.generateEnemySkinTexture(0x8B4513); // Brown fur
+        const bodyMaterial = new THREE.MeshStandardMaterial({
+            map: furTexture,
+            color: 0x8B4513,
+            roughness: 0.9,
+            metalness: 0.0
+        });
+        const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+        body.position.set(0, 0.4, 0);
+        body.castShadow = true;
+        body.receiveShadow = true;
+        wolf.add(body);
+        
+        // Wolf head
+        const headGeometry = new THREE.BoxGeometry(0.3, 0.25, 0.4);
+        const headMaterial = new THREE.MeshStandardMaterial({
+            map: furTexture,
+            color: 0x654321, // Darker brown for head
+            roughness: 0.9,
+            metalness: 0.0
+        });
+        const head = new THREE.Mesh(headGeometry, headMaterial);
+        head.position.set(0, 0.5, 0.6);
+        wolf.add(head);
+        
+        // Wolf snout
+        const snoutGeometry = new THREE.BoxGeometry(0.15, 0.1, 0.2);
+        const snoutMaterial = new THREE.MeshStandardMaterial({
+            color: 0x2F4F4F,
+            roughness: 0.8,
+            metalness: 0.0
+        });
+        const snout = new THREE.Mesh(snoutGeometry, snoutMaterial);
+        snout.position.set(0, 0.45, 0.8);
+        wolf.add(snout);
+        
+        // Wolf ears
+        const earGeometry = new THREE.ConeGeometry(0.08, 0.15, 6);
+        const earMaterial = new THREE.MeshStandardMaterial({
+            color: 0x8B4513,
+            roughness: 0.9,
+            metalness: 0.0
+        });
+        
+        const leftEar = new THREE.Mesh(earGeometry, earMaterial);
+        leftEar.position.set(-0.1, 0.65, 0.6);
+        wolf.add(leftEar);
+        
+        const rightEar = new THREE.Mesh(earGeometry, earMaterial);
+        rightEar.position.set(0.1, 0.65, 0.6);
+        wolf.add(rightEar);
+        
+        // Glowing wolf eyes
+        const eyeGeometry = new THREE.SphereGeometry(0.04, 6, 4);
+        const eyeMaterial = new THREE.MeshStandardMaterial({
+            color: 0xffff00, // Yellow eyes for wolves
+            emissive: 0xffff00,
+            emissiveIntensity: 0.6,
             metalness: 0.0,
             roughness: 0.1
         });
         
         const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-        leftEye.position.set(-0.1, 1.0, 0.25);
-        group.add(leftEye);
+        leftEye.position.set(-0.08, 0.55, 0.75);
+        wolf.add(leftEye);
         
         const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-        rightEye.position.set(0.1, 1.0, 0.25);
-        group.add(rightEye);
+        rightEye.position.set(0.08, 0.55, 0.75);
+        wolf.add(rightEye);
         
-        return group;
+        // Wolf legs
+        const legGeometry = new THREE.CylinderGeometry(0.04, 0.04, 0.4);
+        const legMaterial = new THREE.MeshStandardMaterial({
+            color: 0x654321,
+            roughness: 0.8,
+            metalness: 0.0
+        });
+        
+        // Front legs
+        const frontLeftLeg = new THREE.Mesh(legGeometry, legMaterial);
+        frontLeftLeg.position.set(-0.2, 0.2, 0.3);
+        wolf.add(frontLeftLeg);
+        
+        const frontRightLeg = new THREE.Mesh(legGeometry, legMaterial);
+        frontRightLeg.position.set(0.2, 0.2, 0.3);
+        wolf.add(frontRightLeg);
+        
+        // Back legs
+        const backLeftLeg = new THREE.Mesh(legGeometry, legMaterial);
+        backLeftLeg.position.set(-0.2, 0.2, -0.3);
+        wolf.add(backLeftLeg);
+        
+        const backRightLeg = new THREE.Mesh(legGeometry, legMaterial);
+        backRightLeg.position.set(0.2, 0.2, -0.3);
+        wolf.add(backRightLeg);
+        
+        // Wolf tail
+        const tailGeometry = new THREE.CylinderGeometry(0.03, 0.06, 0.3);
+        const tailMaterial = new THREE.MeshStandardMaterial({
+            color: 0x8B4513,
+            roughness: 0.9,
+            metalness: 0.0
+        });
+        const tail = new THREE.Mesh(tailGeometry, tailMaterial);
+        tail.position.set(0, 0.5, -0.6);
+        tail.rotation.x = Math.PI / 6; // Slight upward angle
+        wolf.add(tail);
+        
+        // Level indicator for wolves
+        if (level > 1) {
+            const levelGeometry = new THREE.SphereGeometry(0.06, 6, 6);
+            const levelMaterial = new THREE.MeshStandardMaterial({
+                color: 0xffff00,
+                emissive: 0xffff00,
+                emissiveIntensity: 0.4,
+                metalness: 0.0,
+                roughness: 0.3
+            });
+            const levelIndicator = new THREE.Mesh(levelGeometry, levelMaterial);
+            levelIndicator.position.y = 0.9;
+            wolf.add(levelIndicator);
+        }
+        
+        // Scale based on level
+        const scale = 0.8 + (level - 1) * 0.1;
+        wolf.scale.setScalar(scale);
+        
+        console.log(`🐺 Created enhanced wolf model (Level ${level})`);
+        return wolf;
     }
     
     private generateEnemySkinTexture(baseColor: number): THREE.Texture {

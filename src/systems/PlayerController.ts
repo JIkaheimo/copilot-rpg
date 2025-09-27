@@ -1,12 +1,12 @@
 import * as THREE from 'three';
 import { InputManager } from '@core/InputManager';
 import { MobileControls } from '@ui/MobileControls';
+import { CharacterModelGenerator } from '@utils/CharacterModelGenerator';
 
 export class PlayerController {
     private inputManager: InputManager;
     private camera: THREE.PerspectiveCamera;
     private player!: THREE.Group;
-    private playerMesh!: THREE.Mesh;
     private velocity: THREE.Vector3;
     private isGrounded: boolean = true;
     private mobileControls: MobileControls;
@@ -37,26 +37,24 @@ export class PlayerController {
     }
     
     private createPlayer(): void {
-        this.player = new THREE.Group();
-        
-        // Create a simple player representation (capsule-like shape)
-        const bodyGeometry = new THREE.CapsuleGeometry(0.5, 1.5);
-        const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0x0066cc });
-        this.playerMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
-        this.playerMesh.position.y = 1;
-        this.playerMesh.castShadow = true;
-        
-        // Add a simple face indicator
-        const faceGeometry = new THREE.SphereGeometry(0.1);
-        const faceMaterial = new THREE.MeshLambertMaterial({ color: 0xffffff });
-        const face = new THREE.Mesh(faceGeometry, faceMaterial);
-        face.position.set(0, 1.2, 0.4);
-        
-        this.player.add(this.playerMesh);
-        this.player.add(face);
+        // Generate detailed player character model
+        this.player = CharacterModelGenerator.generatePlayerModel({
+            height: 1.8,
+            clothingColor: 0x4169E1, // Royal blue clothing
+            hairColor: 0x8B4513,     // Brown hair
+            eyeColor: 0x0080ff,      // Bright blue eyes
+            skinTone: 0xF5DEB3,      // Beige skin
+            equipmentConfig: {
+                weapon: 'sword',
+                chestplate: 'leather',
+                helmet: 'none'
+            }
+        });
         
         // Set initial position
         this.player.position.set(0, 0, 0);
+        
+        console.log('🧙‍♂️ Enhanced player character created with detailed model');
     }
     
     private setupCamera(): void {

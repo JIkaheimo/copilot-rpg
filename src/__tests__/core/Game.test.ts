@@ -10,6 +10,9 @@ describe('Game', () => {
     let game: Game;
 
     beforeEach(() => {
+        // Use fake timers to properly handle game loop cleanup
+        vi.useFakeTimers();
+        
         // Create a mock canvas element
         mockCanvas = document.createElement('canvas');
         mockCanvas.width = 800;
@@ -79,9 +82,10 @@ describe('Game', () => {
     afterEach(() => {
         if (game) {
             game.stop();
-            // Clear any pending timeouts/intervals
-            vi.clearAllTimers();
         }
+        // Clear any pending timers and restore mocks
+        vi.clearAllTimers();
+        vi.useRealTimers();
         vi.restoreAllMocks();
     });
 
