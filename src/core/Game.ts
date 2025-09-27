@@ -14,6 +14,7 @@ import { ParticleSystem } from '../systems/ParticleSystem';
 import { LightingSystem } from '../systems/LightingSystem';
 import { WeaponSystem } from '../systems/WeaponSystem';
 import { AchievementSystem } from '../systems/AchievementSystem';
+import { MagicSystem } from '../systems/MagicSystem';
 
 export class Game {
     private canvas: HTMLCanvasElement;
@@ -33,6 +34,7 @@ export class Game {
     private lightingSystem: LightingSystem;
     private weaponSystem: WeaponSystem;
     private achievementSystem: AchievementSystem;
+    private magicSystem: MagicSystem;
     
     private isRunning: boolean = false;
     private lastTime: number = 0;
@@ -70,6 +72,7 @@ export class Game {
         this.lightingSystem = new LightingSystem();
         this.weaponSystem = new WeaponSystem();
         this.achievementSystem = new AchievementSystem();
+        this.magicSystem = new MagicSystem();
         
         // Initialize player controller
         this.playerController = new PlayerController(
@@ -112,6 +115,9 @@ export class Game {
         // Initialize particle system
         this.particleSystem.initialize(this.sceneManager.getScene());
         
+        // Initialize magic system
+        this.magicSystem.initialize(this.sceneManager.getScene(), this.gameState, this.particleSystem);
+        
         // Initialize combat and enemy systems
         this.combatSystem.initialize(this.sceneManager.getScene(), this.gameState);
         this.enemySystem.initialize(this.sceneManager.getScene());
@@ -123,6 +129,7 @@ export class Game {
         this.setupLightingIntegration();
         this.setupWeaponIntegration();
         this.setupAchievementIntegration();
+        this.setupMagicIntegration();
         
         // Set up player combat input
         this.setupPlayerCombatInput();
@@ -207,6 +214,40 @@ export class Game {
         window.addEventListener('playerInteract', () => {
             const playerPosition = this.playerController.getPosition();
             this.interactionSystem.interactWithNearest(playerPosition, this.gameState);
+        });
+
+        // Magic spell hotkeys
+        window.addEventListener('keydown', (event) => {
+            const playerPosition = this.playerController.getPosition();
+            const forwardDirection = this.playerController.getForwardDirection();
+            const spellTarget = playerPosition.clone().add(forwardDirection.multiplyScalar(10));
+
+            switch (event.code) {
+                case 'Digit1':
+                    event.preventDefault();
+                    this.magicSystem.castSpell('fireball', spellTarget);
+                    break;
+                case 'Digit2':
+                    event.preventDefault();
+                    this.magicSystem.castSpell('heal');
+                    break;
+                case 'Digit3':
+                    event.preventDefault();
+                    this.magicSystem.castSpell('lightning_bolt', spellTarget);
+                    break;
+                case 'Digit4':
+                    event.preventDefault();
+                    this.magicSystem.castSpell('ice_shard', spellTarget);
+                    break;
+                case 'Digit5':
+                    event.preventDefault();
+                    this.magicSystem.castSpell('shield');
+                    break;
+                case 'KeyX':
+                    event.preventDefault();
+                    this.magicSystem.cancelCurrentCast();
+                    break;
+            }
         });
     }
     
@@ -368,6 +409,69 @@ export class Game {
         });
     }
     
+    private setupMagicIntegration(): void {
+        // Connect magic system to combat system for spell damage
+        this.magicSystem.on('spellDamage', (data: any) => {
+            // Find enemies in spell area and damage them
+            const enemies = this.enemySystem.getEnemiesInRange(data.position, data.area);
+            enemies.forEach(enemy => {
+                this.combatSystem.dealDamage(enemy.id, {
+                    amount: data.damage,
+                    type: 'magical',
+                    source: 'player',
+                    critical: Math.random() < 0.1 // 10% crit chance for spells
+                });
+            });
+        });
+
+        // Connect magic system to achievement system
+        this.magicSystem.on('spellCastComplete', () => {
+            this.achievementSystem.trackSpellCast();
+        });
+
+        // Connect magic system to UI notifications
+        this.magicSystem.on('spellCastStart', (spell: any) => {
+            this.uiManager.showNotification(
+                `🔮 Casting ${spell.name}...`,
+                'info'
+            );
+        });
+
+        this.magicSystem.on('spellCastProgress', (data: any) => {
+            this.uiManager.updateCastingInfo(data.spell.name, data.progress * 100);
+        });
+
+        this.magicSystem.on('spellCastComplete', () => {
+            this.uiManager.hideCastingInfo();
+        });
+
+        this.magicSystem.on('spellCastCancelled', () => {
+            this.uiManager.hideCastingInfo();
+            this.uiManager.showNotification(
+                'Spell cancelled',
+                'warning'
+            );
+        });
+
+        // Connect status effects to combat
+        this.magicSystem.on('statusEffectApplied', (data: any) => {
+            if (data.target === 'player' && data.effect.type === 'buff') {
+                this.uiManager.showNotification(
+                    `✨ ${data.effect.name} activated`,
+                    'success'
+                );
+            }
+        });
+
+        // Listen for player heal events
+        this.magicSystem.on('playerHealed', (amount: number) => {
+            this.uiManager.showNotification(
+                `💚 Healed for ${amount} health`,
+                'success'
+            );
+        });
+    }
+    
     start(): void {
         if (this.isRunning) return;
         
@@ -428,6 +532,9 @@ export class Game {
         
         // Update particle system
         this.particleSystem.update(deltaTime);
+        
+        // Update magic system
+        this.magicSystem.update(deltaTime);
         
         // Update combat and enemy systems
         const playerPosition = this.playerController.getPosition();
@@ -518,4 +625,5 @@ export class Game {
     getLightingSystem(): LightingSystem { return this.lightingSystem; }
     getWeaponSystem(): WeaponSystem { return this.weaponSystem; }
     getAchievementSystem(): AchievementSystem { return this.achievementSystem; }
+    getMagicSystem(): MagicSystem { return this.magicSystem; }
 }

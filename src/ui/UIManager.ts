@@ -6,11 +6,16 @@ export class UIManager {
     // UI Elements
     private healthBar: HTMLElement | null = null;
     private healthText: HTMLElement | null = null;
+    private manaBar: HTMLElement | null = null;
+    private manaText: HTMLElement | null = null;
     private levelText: HTMLElement | null = null;
     private xpText: HTMLElement | null = null;
     private enemyCount: HTMLElement | null = null;
     private attackCooldown: HTMLElement | null = null;
     private cooldownTime: HTMLElement | null = null;
+    private castingInfo: HTMLElement | null = null;
+    private spellName: HTMLElement | null = null;
+    private castProgress: HTMLElement | null = null;
     private interactionPrompt: HTMLElement | null = null;
     private interactableName: HTMLElement | null = null;
     private minimapCanvas: HTMLCanvasElement | null = null;
@@ -22,11 +27,16 @@ export class UIManager {
         // Get UI elements
         this.healthBar = document.getElementById('healthBar');
         this.healthText = document.getElementById('healthText');
+        this.manaBar = document.getElementById('manaBar');
+        this.manaText = document.getElementById('manaText');
         this.levelText = document.getElementById('levelText');
         this.xpText = document.getElementById('xpText');
         this.enemyCount = document.getElementById('enemyCount');
         this.attackCooldown = document.getElementById('attackCooldown');
         this.cooldownTime = document.getElementById('cooldownTime');
+        this.castingInfo = document.getElementById('castingInfo');
+        this.spellName = document.getElementById('spellName');
+        this.castProgress = document.getElementById('castProgress');
         this.interactionPrompt = document.getElementById('interactionPrompt');
         this.interactableName = document.getElementById('interactableName');
         
@@ -93,6 +103,7 @@ export class UIManager {
         
         // Update all UI elements
         this.updateHealthDisplay();
+        this.updateManaDisplay();
         this.updateLevelDisplay();
         this.updateXPDisplay();
         this.updateCombatInfo(combatInfo);
@@ -118,6 +129,27 @@ export class UIManager {
             this.healthBar.style.background = 'linear-gradient(90deg, #f59e0b, #eab308)';
         } else {
             this.healthBar.style.background = 'linear-gradient(90deg, #ef4444, #dc2626)';
+        }
+    }
+    
+    private updateManaDisplay(): void {
+        if (!this.gameState || !this.manaBar || !this.manaText) return;
+        
+        const manaPercentage = (this.gameState.player.mana / this.gameState.player.maxMana) * 100;
+        
+        // Update mana bar
+        this.manaBar.style.width = `${manaPercentage}%`;
+        
+        // Update mana text
+        this.manaText.textContent = `${Math.floor(this.gameState.player.mana)}/${this.gameState.player.maxMana}`;
+        
+        // Change color based on mana level
+        if (manaPercentage > 60) {
+            this.manaBar.style.background = 'linear-gradient(90deg, #0066cc, #0088ff)';
+        } else if (manaPercentage > 30) {
+            this.manaBar.style.background = 'linear-gradient(90deg, #0044aa, #0066cc)';
+        } else {
+            this.manaBar.style.background = 'linear-gradient(90deg, #002288, #0044aa)';
         }
     }
     
@@ -328,5 +360,20 @@ export class UIManager {
                 levelUpDiv.parentNode.removeChild(levelUpDiv);
             }
         }, 2000);
+    }
+    
+    // Magic system UI methods
+    updateCastingInfo(spellName: string, progress: number): void {
+        if (this.castingInfo && this.spellName && this.castProgress) {
+            this.castingInfo.style.display = 'block';
+            this.spellName.textContent = spellName;
+            this.castProgress.textContent = Math.floor(progress).toString();
+        }
+    }
+    
+    hideCastingInfo(): void {
+        if (this.castingInfo) {
+            this.castingInfo.style.display = 'none';
+        }
     }
 }

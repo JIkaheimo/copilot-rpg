@@ -336,6 +336,12 @@ export class AchievementSystem {
         this.updateProgress('night_owl', deltaTime);
     }
 
+    trackSpellCast(): void {
+        // Track spell casting for future magic achievements
+        // This could be used for achievements like "Cast 100 spells" or "Master of Magic"
+        console.log('🔮 Spell cast tracked for achievements');
+    }
+
     private updateProgress(achievementId: string, value: number): void {
         const achievement = this.achievements.get(achievementId);
         if (!achievement || this.unlockedAchievements.has(achievementId)) {

@@ -248,6 +248,14 @@ export class PlayerController {
         return this.velocity.clone();
     }
     
+    getForwardDirection(): THREE.Vector3 {
+        const forward = new THREE.Vector3(0, 0, -1);
+        forward.applyEuler(this.cameraRotation);
+        forward.y = 0; // Keep it horizontal for spells
+        forward.normalize();
+        return forward;
+    }
+    
     isMoving(): boolean {
         return this.velocity.length() > 0.1;
     }
