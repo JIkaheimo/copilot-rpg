@@ -75,10 +75,50 @@ describe('InputManager', () => {
       expect(mockCanvas.addEventListener).toHaveBeenCalledWith('mousedown', expect.any(Function));
       expect(mockCanvas.addEventListener).toHaveBeenCalledWith('mouseup', expect.any(Function));
       expect(mockCanvas.addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
-      expect(mockCanvas.addEventListener).toHaveBeenCalledWith('touchstart', expect.any(Function), { passive: false });
-      expect(mockCanvas.addEventListener).toHaveBeenCalledWith('touchmove', expect.any(Function), { passive: false });
-      expect(mockCanvas.addEventListener).toHaveBeenCalledWith('touchend', expect.any(Function), { passive: false });
-      expect(mockCanvas.addEventListener).toHaveBeenCalledWith('touchcancel', expect.any(Function), { passive: false });
+      
+      // Touch events should be on canvas for desktop devices
+      if (!inputManager.isMobileDevice()) {
+        expect(mockCanvas.addEventListener).toHaveBeenCalledWith('touchstart', expect.any(Function), { passive: false });
+        expect(mockCanvas.addEventListener).toHaveBeenCalledWith('touchmove', expect.any(Function), { passive: false });
+        expect(mockCanvas.addEventListener).toHaveBeenCalledWith('touchend', expect.any(Function), { passive: false });
+        expect(mockCanvas.addEventListener).toHaveBeenCalledWith('touchcancel', expect.any(Function), { passive: false });
+      } else {
+        // Touch events should be on document for mobile devices
+        expect(mockAddEventListener).toHaveBeenCalledWith('touchstart', expect.any(Function), { passive: false });
+        expect(mockAddEventListener).toHaveBeenCalledWith('touchmove', expect.any(Function), { passive: false });
+        expect(mockAddEventListener).toHaveBeenCalledWith('touchend', expect.any(Function), { passive: false });
+        expect(mockAddEventListener).toHaveBeenCalledWith('touchcancel', expect.any(Function), { passive: false });
+      }
+      
+      expect(mockAddEventListener).toHaveBeenCalledWith('pointerlockchange', expect.any(Function));
+      expect(mockCanvas.addEventListener).toHaveBeenCalledWith('contextmenu', expect.any(Function));
+    });
+
+    it('should set up event listeners for mobile devices', () => {
+      // Mock mobile user agent
+      Object.defineProperty(navigator, 'userAgent', {
+        value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X)',
+        configurable: true
+      });
+      
+      const mobileInputManager = new InputManager(mockCanvas);
+      vi.clearAllMocks(); // Clear previous calls
+      
+      mobileInputManager.initialize();
+      
+      expect(mockAddEventListener).toHaveBeenCalledWith('keydown', expect.any(Function));
+      expect(mockAddEventListener).toHaveBeenCalledWith('keyup', expect.any(Function));
+      expect(mockCanvas.addEventListener).toHaveBeenCalledWith('mousemove', expect.any(Function));
+      expect(mockCanvas.addEventListener).toHaveBeenCalledWith('mousedown', expect.any(Function));
+      expect(mockCanvas.addEventListener).toHaveBeenCalledWith('mouseup', expect.any(Function));
+      expect(mockCanvas.addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
+      
+      // Touch events should be on document for mobile devices
+      expect(mockAddEventListener).toHaveBeenCalledWith('touchstart', expect.any(Function), { passive: false });
+      expect(mockAddEventListener).toHaveBeenCalledWith('touchmove', expect.any(Function), { passive: false });
+      expect(mockAddEventListener).toHaveBeenCalledWith('touchend', expect.any(Function), { passive: false });
+      expect(mockAddEventListener).toHaveBeenCalledWith('touchcancel', expect.any(Function), { passive: false });
+      
       expect(mockAddEventListener).toHaveBeenCalledWith('pointerlockchange', expect.any(Function));
       expect(mockCanvas.addEventListener).toHaveBeenCalledWith('contextmenu', expect.any(Function));
     });

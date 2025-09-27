@@ -57,11 +57,19 @@ export class InputManager {
         this.canvas.addEventListener('mouseup', this.onMouseUp.bind(this));
         this.canvas.addEventListener('click', this.onCanvasClick.bind(this));
         
-        // Touch events for mobile support
-        this.canvas.addEventListener('touchstart', this.onTouchStart.bind(this), { passive: false });
-        this.canvas.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: false });
-        this.canvas.addEventListener('touchend', this.onTouchEnd.bind(this), { passive: false });
-        this.canvas.addEventListener('touchcancel', this.onTouchCancel.bind(this), { passive: false });
+        // Touch events for mobile support - listen on document for mobile controls
+        if (this.inputState.isMobileDevice) {
+            document.addEventListener('touchstart', this.onTouchStart.bind(this), { passive: false });
+            document.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: false });
+            document.addEventListener('touchend', this.onTouchEnd.bind(this), { passive: false });
+            document.addEventListener('touchcancel', this.onTouchCancel.bind(this), { passive: false });
+        } else {
+            // For desktop, only listen on canvas
+            this.canvas.addEventListener('touchstart', this.onTouchStart.bind(this), { passive: false });
+            this.canvas.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: false });
+            this.canvas.addEventListener('touchend', this.onTouchEnd.bind(this), { passive: false });
+            this.canvas.addEventListener('touchcancel', this.onTouchCancel.bind(this), { passive: false });
+        }
         
         // Pointer lock events
         document.addEventListener('pointerlockchange', this.onPointerLockChange.bind(this));
@@ -119,9 +127,9 @@ export class InputManager {
         
         for (let i = 0; i < event.changedTouches.length; i++) {
             const touch = event.changedTouches[i];
-            const rect = this.canvas.getBoundingClientRect();
-            const x = touch.clientX - rect.left;
-            const y = touch.clientY - rect.top;
+            // Use absolute viewport coordinates for mobile controls compatibility
+            const x = touch.clientX;
+            const y = touch.clientY;
             
             this.inputState.touches[touch.identifier] = {
                 id: touch.identifier,
@@ -143,9 +151,9 @@ export class InputManager {
             const touchState = this.inputState.touches[touch.identifier];
             
             if (touchState) {
-                const rect = this.canvas.getBoundingClientRect();
-                const newX = touch.clientX - rect.left;
-                const newY = touch.clientY - rect.top;
+                // Use absolute viewport coordinates
+                const newX = touch.clientX;
+                const newY = touch.clientY;
                 
                 touchState.deltaX = newX - touchState.x;
                 touchState.deltaY = newY - touchState.y;
@@ -288,11 +296,18 @@ export class InputManager {
         this.canvas.removeEventListener('click', this.onCanvasClick.bind(this));
         this.canvas.removeEventListener('contextmenu', (e) => e.preventDefault());
         
-        // Remove touch events
-        this.canvas.removeEventListener('touchstart', this.onTouchStart.bind(this));
-        this.canvas.removeEventListener('touchmove', this.onTouchMove.bind(this));
-        this.canvas.removeEventListener('touchend', this.onTouchEnd.bind(this));
-        this.canvas.removeEventListener('touchcancel', this.onTouchCancel.bind(this));
+        // Remove touch events - clean up both document and canvas listeners
+        if (this.inputState.isMobileDevice) {
+            document.removeEventListener('touchstart', this.onTouchStart.bind(this));
+            document.removeEventListener('touchmove', this.onTouchMove.bind(this));
+            document.removeEventListener('touchend', this.onTouchEnd.bind(this));
+            document.removeEventListener('touchcancel', this.onTouchCancel.bind(this));
+        } else {
+            this.canvas.removeEventListener('touchstart', this.onTouchStart.bind(this));
+            this.canvas.removeEventListener('touchmove', this.onTouchMove.bind(this));
+            this.canvas.removeEventListener('touchend', this.onTouchEnd.bind(this));
+            this.canvas.removeEventListener('touchcancel', this.onTouchCancel.bind(this));
+        }
         
         // Remove pointer lock events
         document.removeEventListener('pointerlockchange', this.onPointerLockChange.bind(this));
