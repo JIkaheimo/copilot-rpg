@@ -251,6 +251,68 @@ console.log('🌦️ Weather message');
 console.log('☀️ Day/Night message');
 ```
 
+#### Testing Requirements and Guidelines
+
+**Test Coverage Target**: Aim for **80% test coverage** across all code files. This ensures high code quality and reliability.
+
+**Test Creation Standards**:
+- **Every new feature MUST have comprehensive tests** covering all public methods and edge cases
+- **All new systems MUST have test files** in the `src/__tests__/` directory following the pattern: `SystemName.test.ts`
+- **Critical path testing**: Focus on main user flows and system integrations
+- **Edge case coverage**: Test error conditions, boundary values, and unexpected inputs
+- **Mock external dependencies**: Use proper mocking for Three.js, DOM elements, and external APIs
+
+**Test Organization**:
+```typescript
+describe('SystemName', () => {
+  describe('Initialization', () => {
+    // Test system setup and configuration
+  });
+  
+  describe('Core Functionality', () => {
+    // Test main system behaviors
+  });
+  
+  describe('Edge Cases', () => {
+    // Test error conditions and boundary cases
+  });
+  
+  describe('Integration', () => {
+    // Test interactions with other systems
+  });
+  
+  describe('Cleanup', () => {
+    // Test resource cleanup and teardown
+  });
+});
+```
+
+**Test Requirements for New Features**:
+1. **Unit Tests**: Test individual methods and functions in isolation
+2. **Integration Tests**: Test how systems work together
+3. **Error Handling Tests**: Verify graceful handling of error conditions
+4. **Performance Tests**: Ensure systems perform within acceptable limits
+5. **Mock Testing**: Properly mock Three.js objects, DOM elements, and external dependencies
+
+**Coverage Monitoring**:
+- Run `npm run test:coverage` to check current coverage levels
+- New code should not decrease overall coverage percentage
+- Aim for 80%+ coverage on statements, branches, functions, and lines
+- Use coverage reports to identify untested code paths
+
+**Test Quality Standards**:
+- **Descriptive test names**: Tests should clearly describe what they're testing
+- **Single responsibility**: Each test should verify one specific behavior
+- **Arrange-Act-Assert pattern**: Structure tests with clear setup, execution, and verification
+- **No test interdependencies**: Tests should be able to run in any order
+- **Fast execution**: Tests should complete quickly to enable frequent testing
+
+**CI/CD Integration**:
+- Tests must pass before code can be merged
+- Coverage reports are generated automatically
+- Failed tests block deployment to production
+- Performance regression tests prevent performance degradation
+
 ## Common Patterns and Utilities
 
 ### Vector and Math Operations
