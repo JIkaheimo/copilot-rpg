@@ -2,8 +2,21 @@
 import { vi } from 'vitest';
 
 // Mock navigator.getGamepads for testing
-if (!('getGamepads' in navigator)) {
-  (navigator as any).getGamepads = vi.fn(() => [null, null, null, null]);
+Object.defineProperty(global, 'navigator', {
+  value: {
+    getGamepads: vi.fn(() => [null, null, null, null]),
+  },
+  writable: true,
+});
+
+// Also ensure navigator exists in window if needed
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, 'navigator', {
+    value: {
+      getGamepads: vi.fn(() => [null, null, null, null]),
+    },
+    writable: true,
+  });
 }
 
 // Mock HTMLCanvasElement and WebGL context
@@ -43,8 +56,13 @@ Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
 });
 
 // Mock requestAnimationFrame for testing
-global.requestAnimationFrame = vi.fn((cb) => setTimeout(cb, 16));
-global.cancelAnimationFrame = vi.fn();
+global.requestAnimationFrame = vi.fn((cb) => {
+    const id = setTimeout(cb, 16);
+    return id as number;
+});
+global.cancelAnimationFrame = vi.fn((id: number) => {
+    clearTimeout(id);
+});
 
 // Mock btoa/atob for save system
 global.btoa = vi.fn((str) => Buffer.from(str).toString('base64'));

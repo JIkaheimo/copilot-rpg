@@ -15,6 +15,14 @@ describe('Game', () => {
         mockCanvas.width = 800;
         mockCanvas.height = 600;
         
+        // Mock navigator for gamepad support
+        Object.defineProperty(global, 'navigator', {
+            value: {
+                getGamepads: vi.fn(() => [null, null, null, null])
+            },
+            writable: true
+        });
+        
         // Mock WebGL context
         const mockContext = {
             getExtension: vi.fn(),
@@ -71,6 +79,8 @@ describe('Game', () => {
     afterEach(() => {
         if (game) {
             game.stop();
+            // Clear any pending timeouts/intervals
+            vi.clearAllTimers();
         }
         vi.restoreAllMocks();
     });
@@ -118,10 +128,12 @@ describe('Game', () => {
             
             await game.initialize();
             
-            expect(consoleSpy).toHaveBeenCalledWith('🚀 Initializing Copilot RPG...');
-            expect(consoleSpy).toHaveBeenCalledWith('✅ Game systems initialized');
-            expect(consoleSpy).toHaveBeenCalledWith('🎯 Game loop started');
-            expect(consoleSpy).toHaveBeenCalledWith('🎮 Copilot RPG initialized successfully!');
+            // Check that initialization messages were logged
+            const calls = consoleSpy.mock.calls.map(call => call[0]);
+            expect(calls).toContain('🚀 Initializing Copilot RPG...');
+            expect(calls).toContain('✅ Game systems initialized');
+            expect(calls).toContain('🎯 Game loop started');
+            // Note: The "🎮 Copilot RPG initialized successfully!" message is logged in main.ts, not in Game.ts
             
             consoleSpy.mockRestore();
         });
