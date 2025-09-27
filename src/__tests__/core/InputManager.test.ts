@@ -583,5 +583,60 @@ describe('InputManager', () => {
       (inputManager as any).onTouchEnd(endEvent);
       expect(inputManager.getTouchById(1)).toBe(null);
     });
+
+    it('should handle touch events with stopPropagation', () => {
+      const touchEventWithStop = {
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+        changedTouches: [
+          {
+            identifier: 1,
+            clientX: 100,
+            clientY: 200
+          }
+        ]
+      } as unknown as TouchEvent;
+
+      expect(() => {
+        (inputManager as any).onTouchStart(touchEventWithStop);
+        (inputManager as any).onTouchMove(touchEventWithStop);
+        (inputManager as any).onTouchEnd(touchEventWithStop);
+        (inputManager as any).onTouchCancel(touchEventWithStop);
+      }).not.toThrow();
+
+      expect(touchEventWithStop.stopPropagation).toHaveBeenCalled();
+    });
+
+    it('should handle touch events without stopPropagation gracefully', () => {
+      const touchEventWithoutStop = {
+        preventDefault: vi.fn(),
+        // No stopPropagation method
+        changedTouches: [
+          {
+            identifier: 1,
+            clientX: 100,
+            clientY: 200
+          }
+        ]
+      } as unknown as TouchEvent;
+
+      expect(() => {
+        (inputManager as any).onTouchStart(touchEventWithoutStop);
+        (inputManager as any).onTouchMove(touchEventWithoutStop);
+        (inputManager as any).onTouchEnd(touchEventWithoutStop);
+        (inputManager as any).onTouchCancel(touchEventWithoutStop);
+      }).not.toThrow();
+    });
+
+    it('should properly cleanup event listeners', () => {
+      const mockRemoveEventListener = vi.spyOn(document, 'removeEventListener');
+      const mockCanvasRemoveEventListener = vi.spyOn(mockCanvas, 'removeEventListener');
+
+      inputManager.cleanup();
+
+      // Verify event listeners are removed
+      expect(mockRemoveEventListener).toHaveBeenCalled();
+      expect(mockCanvasRemoveEventListener).toHaveBeenCalled();
+    });
   });
 });

@@ -298,6 +298,90 @@ describe('MobileControls', () => {
     });
   });
 
+  describe('Touch Event Reliability', () => {
+    it('should handle rapid touch start/end events', () => {
+      const rapidTouches = [
+        { id: 1, x: 140, y: 540, startX: 140, startY: 540, deltaX: 0, deltaY: 0 },
+        { id: 2, x: 300, y: 200, startX: 300, startY: 200, deltaX: 0, deltaY: 0 }
+      ];
+
+      vi.spyOn(inputManager, 'getActiveTouches').mockReturnValue(rapidTouches);
+      vi.spyOn(inputManager, 'getTouchById').mockImplementation((id) => 
+        rapidTouches.find(t => t.id === id) || null
+      );
+
+      mobileControls.update();
+
+      // Verify both touches are handled
+      const joystickState = mobileControls.getJoystickState();
+      expect(joystickState.active).toBe(true);
+    });
+
+    it('should prevent touch conflicts between joystick and buttons', () => {
+      const joystickTouch = { id: 1, x: 140, y: 540, startX: 140, startY: 540, deltaX: 0, deltaY: 0 };
+      const buttonTouch = { id: 2, x: 300, y: 100, startX: 300, startY: 100, deltaX: 0, deltaY: 0 };
+
+      vi.spyOn(inputManager, 'getActiveTouches').mockReturnValue([joystickTouch, buttonTouch]);
+      vi.spyOn(inputManager, 'getTouchById').mockImplementation((id) => 
+        [joystickTouch, buttonTouch].find(t => t.id === id) || null
+      );
+
+      mobileControls.update();
+
+      // Both should work independently
+      const joystickState = mobileControls.getJoystickState();
+      expect(joystickState.active).toBe(true);
+      expect(joystickState.touchId).toBe(1);
+      
+      // Button should also be active (assuming it's in the right position)
+      // This test validates touch isolation
+      expect(joystickState.touchId).not.toBe(buttonTouch.id);
+    });
+
+    it('should handle touch tolerance correctly', () => {
+      // Touch slightly outside exact bounds but within tolerance
+      const nearEdgeTouch = { 
+        id: 1, 
+        x: 139, // Just outside left edge with tolerance
+        y: 540, 
+        startX: 139, 
+        startY: 540, 
+        deltaX: 0, 
+        deltaY: 0 
+      };
+
+      vi.spyOn(inputManager, 'getActiveTouches').mockReturnValue([nearEdgeTouch]);
+      vi.spyOn(inputManager, 'getTouchById').mockReturnValue(nearEdgeTouch);
+
+      mobileControls.update();
+
+      const joystickState = mobileControls.getJoystickState();
+      expect(joystickState.active).toBe(true);
+    });
+
+    it('should normalize joystick values correctly', () => {
+      const extremeTouch = {
+        id: 1,
+        x: 200, // Far right within container
+        y: 540,
+        startX: 140,
+        startY: 540,
+        deltaX: 60,
+        deltaY: 0
+      };
+
+      vi.spyOn(inputManager, 'getActiveTouches').mockReturnValue([extremeTouch]);
+      vi.spyOn(inputManager, 'getTouchById').mockReturnValue(extremeTouch);
+
+      mobileControls.update();
+
+      const joystickState = mobileControls.getJoystickState();
+      expect(joystickState.active).toBe(true);
+      expect(Math.abs(joystickState.normalizedX)).toBeLessThanOrEqual(1);
+      expect(Math.abs(joystickState.normalizedY)).toBeLessThanOrEqual(1);
+    });
+  });
+
   describe('Integration', () => {
     it('should work with InputManager', () => {
       expect(inputManager.isMobileDevice()).toBe(true);

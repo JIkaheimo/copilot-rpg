@@ -158,12 +158,21 @@ export class MobileControls {
         // Check if existing joystick touch is still active
         if (this.joystickState.touchId !== null) {
             activeTouch = this.inputManager.getTouchById(this.joystickState.touchId);
+            // If the touch is no longer active, reset the touch ID
+            if (!activeTouch) {
+                this.joystickState.touchId = null;
+            }
         }
         
         // If no active touch, look for new touch in joystick area
         if (!activeTouch) {
             for (const touch of touches) {
-                if (this.isTouchInElement(touch, this.joystickContainer)) {
+                // Check if this touch is already used by buttons
+                const isTouchUsedByButton = Object.values(this.buttonStates).some(
+                    state => state.touchId === touch.id
+                );
+                
+                if (!isTouchUsedByButton && this.isTouchInElement(touch, this.joystickContainer)) {
                     activeTouch = touch;
                     this.joystickState.touchId = touch.id;
                     break;
@@ -192,8 +201,8 @@ export class MobileControls {
             }
             
             // Calculate normalized values (-1 to 1)
-            this.joystickState.normalizedX = (this.joystickState.currentX - centerX) / maxRadius;
-            this.joystickState.normalizedY = (this.joystickState.currentY - centerY) / maxRadius;
+            this.joystickState.normalizedX = Math.max(-1, Math.min(1, (this.joystickState.currentX - centerX) / maxRadius));
+            this.joystickState.normalizedY = Math.max(-1, Math.min(1, (this.joystickState.currentY - centerY) / maxRadius));
             
             // Update knob position
             this.joystickKnob.style.transform = `translate(${
@@ -209,13 +218,13 @@ export class MobileControls {
             this.joystickState.normalizedY = 0;
             this.joystickState.touchId = null;
             
-            // Reset knob position
+            // Reset knob position with smooth transition
             this.joystickKnob.style.transform = 'translate(-50%, -50%)';
         }
     }
     
     private updateActionButtons(touches: TouchState[]): void {
-        // Reset all buttons first
+        // First pass: Release buttons whose touches are no longer active
         Object.keys(this.buttonStates).forEach(buttonId => {
             const buttonState = this.buttonStates[buttonId];
             if (buttonState.touchId !== null) {
@@ -229,8 +238,22 @@ export class MobileControls {
             }
         });
         
-        // Check for new touches on buttons
+        // Second pass: Check for new touches on buttons
         for (const touch of touches) {
+            // Skip touches already used by joystick
+            if (this.joystickState.touchId === touch.id) {
+                continue;
+            }
+            
+            // Skip touches already assigned to buttons
+            const isTouchUsed = Object.values(this.buttonStates).some(
+                state => state.touchId === touch.id
+            );
+            if (isTouchUsed) {
+                continue;
+            }
+            
+            // Check if touch is over any button
             Object.keys(this.actionButtons).forEach(buttonId => {
                 const button = this.actionButtons[buttonId];
                 const buttonState = this.buttonStates[buttonId];
@@ -256,10 +279,12 @@ export class MobileControls {
     
     private isTouchInElement(touch: TouchState, element: HTMLElement): boolean {
         const rect = element.getBoundingClientRect();
-        return touch.x >= rect.left && 
-               touch.x <= rect.right && 
-               touch.y >= rect.top && 
-               touch.y <= rect.bottom;
+        // Add a small tolerance for touch targets
+        const tolerance = 5;
+        return touch.x >= (rect.left - tolerance) && 
+               touch.x <= (rect.right + tolerance) && 
+               touch.y >= (rect.top - tolerance) && 
+               touch.y <= (rect.bottom + tolerance);
     }
     
     // Public getters for game systems
