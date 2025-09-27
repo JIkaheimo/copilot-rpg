@@ -3,7 +3,7 @@
  * Uses the centralized EventBus instead of individual event listeners
  */
 
-import { EventBus, EventCallback, EventData } from '@core/EventBus';
+import { EventBus, EventCallback } from '@core/EventBus';
 
 export class EventEmitter {
     protected eventBus: EventBus;
@@ -54,14 +54,14 @@ export class EventEmitter {
     /**
      * Emit a global event (not namespaced)
      */
-    protected emitGlobal(event: string, data?: EventData): void {
+    protected emitGlobal(event: string, data?: any): void {
         this.eventBus.emit(event, data);
     }
 
     /**
      * Emit a namespaced event
      */
-    protected emit(event: string, data?: EventData): void {
+    protected emit(event: string, data?: any): void {
         this.namespacedEmitter.emit(event, data);
     }
 

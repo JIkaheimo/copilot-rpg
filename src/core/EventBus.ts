@@ -9,7 +9,7 @@ export interface EventData {
     [key: string]: any;
 }
 
-export type EventCallback = (data?: EventData) => void;
+export type EventCallback = (data?: any) => void;
 
 export class EventBus {
     private emitter: EventEmitter;
@@ -57,7 +57,7 @@ export class EventBus {
     /**
      * Emit an event to all subscribers
      */
-    emit(event: string, data?: EventData): void {
+    emit(event: string, data?: any): void {
         try {
             this.emitter.emit(event, data);
         } catch (error) {
@@ -115,7 +115,7 @@ export class EventBus {
             off: (event: string, callback?: EventCallback) => {
                 this.off(`${namespace}:${event}`, callback);
             },
-            emit: (event: string, data?: EventData) => {
+            emit: (event: string, data?: any) => {
                 this.emit(`${namespace}:${event}`, data);
             }
         };
