@@ -1,11 +1,22 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { InputManager, InputState } from '@core/InputManager';
+import { InputManager, InputState, TouchState } from '@core/InputManager';
 
 // Mock canvas and DOM methods
 const mockCanvas = {
   addEventListener: vi.fn(),
   removeEventListener: vi.fn(),
   requestPointerLock: vi.fn(),
+  getBoundingClientRect: vi.fn(() => ({
+    left: 0,
+    top: 0,
+    width: 800,
+    height: 600,
+    right: 800,
+    bottom: 600,
+    x: 0,
+    y: 0,
+    toJSON: () => ({})
+  })),
   style: {},
 } as unknown as HTMLCanvasElement;
 
@@ -64,6 +75,10 @@ describe('InputManager', () => {
       expect(mockCanvas.addEventListener).toHaveBeenCalledWith('mousedown', expect.any(Function));
       expect(mockCanvas.addEventListener).toHaveBeenCalledWith('mouseup', expect.any(Function));
       expect(mockCanvas.addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
+      expect(mockCanvas.addEventListener).toHaveBeenCalledWith('touchstart', expect.any(Function), { passive: false });
+      expect(mockCanvas.addEventListener).toHaveBeenCalledWith('touchmove', expect.any(Function), { passive: false });
+      expect(mockCanvas.addEventListener).toHaveBeenCalledWith('touchend', expect.any(Function), { passive: false });
+      expect(mockCanvas.addEventListener).toHaveBeenCalledWith('touchcancel', expect.any(Function), { passive: false });
       expect(mockAddEventListener).toHaveBeenCalledWith('pointerlockchange', expect.any(Function));
       expect(mockCanvas.addEventListener).toHaveBeenCalledWith('contextmenu', expect.any(Function));
     });
@@ -377,6 +392,156 @@ describe('InputManager', () => {
       }).not.toThrow();
       
       global.document = originalDocument;
+    });
+  });
+
+  describe('Touch Input', () => {
+    beforeEach(() => {
+      inputManager.initialize();
+    });
+
+    it('should detect mobile device', () => {
+      // Mock mobile user agent
+      Object.defineProperty(navigator, 'userAgent', {
+        value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X)',
+        configurable: true
+      });
+      
+      const mobileInputManager = new InputManager(mockCanvas);
+      expect(mobileInputManager.isMobileDevice()).toBe(true);
+    });
+
+    it('should detect desktop device', () => {
+      // Mock desktop user agent
+      Object.defineProperty(navigator, 'userAgent', {
+        value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        configurable: true
+      });
+      
+      delete (window as any).ontouchstart;
+      Object.defineProperty(navigator, 'maxTouchPoints', {
+        value: 0,
+        configurable: true
+      });
+      
+      const desktopInputManager = new InputManager(mockCanvas);
+      expect(desktopInputManager.isMobileDevice()).toBe(false);
+    });
+
+    it('should return empty touches by default', () => {
+      const touches = inputManager.getActiveTouches();
+      expect(Array.isArray(touches)).toBe(true);
+      expect(touches.length).toBe(0);
+    });
+
+    it('should return null for non-existent touch ID', () => {
+      const touch = inputManager.getTouchById(999);
+      expect(touch).toBe(null);
+    });
+
+    it('should handle touch events without error', () => {
+      const touchEvent = {
+        preventDefault: vi.fn(),
+        changedTouches: [
+          {
+            identifier: 1,
+            clientX: 100,
+            clientY: 200
+          }
+        ]
+      } as unknown as TouchEvent;
+
+      expect(() => {
+        (inputManager as any).onTouchStart(touchEvent);
+        (inputManager as any).onTouchMove(touchEvent);
+        (inputManager as any).onTouchEnd(touchEvent);
+        (inputManager as any).onTouchCancel(touchEvent);
+      }).not.toThrow();
+    });
+
+    it('should track touch state correctly', () => {
+      const touchEvent = {
+        preventDefault: vi.fn(),
+        changedTouches: [
+          {
+            identifier: 1,
+            clientX: 100,
+            clientY: 200
+          }
+        ]
+      } as unknown as TouchEvent;
+
+      // Simulate touch start
+      (inputManager as any).onTouchStart(touchEvent);
+      
+      const touches = inputManager.getTouches();
+      expect(touches[1]).toBeDefined();
+      expect(touches[1].x).toBe(100);
+      expect(touches[1].y).toBe(200);
+    });
+
+    it('should handle touch move events', () => {
+      const startEvent = {
+        preventDefault: vi.fn(),
+        changedTouches: [
+          {
+            identifier: 1,
+            clientX: 100,
+            clientY: 200
+          }
+        ]
+      } as unknown as TouchEvent;
+
+      const moveEvent = {
+        preventDefault: vi.fn(),
+        changedTouches: [
+          {
+            identifier: 1,
+            clientX: 150,
+            clientY: 250
+          }
+        ]
+      } as unknown as TouchEvent;
+
+      (inputManager as any).onTouchStart(startEvent);
+      (inputManager as any).onTouchMove(moveEvent);
+      
+      const touch = inputManager.getTouchById(1);
+      expect(touch).toBeDefined();
+      expect(touch!.x).toBe(150);
+      expect(touch!.y).toBe(250);
+      expect(touch!.deltaX).toBe(50);
+      expect(touch!.deltaY).toBe(50);
+    });
+
+    it('should clean up touches on touch end', () => {
+      const startEvent = {
+        preventDefault: vi.fn(),
+        changedTouches: [
+          {
+            identifier: 1,
+            clientX: 100,
+            clientY: 200
+          }
+        ]
+      } as unknown as TouchEvent;
+
+      const endEvent = {
+        preventDefault: vi.fn(),
+        changedTouches: [
+          {
+            identifier: 1,
+            clientX: 100,
+            clientY: 200
+          }
+        ]
+      } as unknown as TouchEvent;
+
+      (inputManager as any).onTouchStart(startEvent);
+      expect(inputManager.getTouchById(1)).toBeDefined();
+      
+      (inputManager as any).onTouchEnd(endEvent);
+      expect(inputManager.getTouchById(1)).toBe(null);
     });
   });
 });

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { InputManager } from '@core/InputManager';
+import { MobileControls } from '@ui/MobileControls';
 
 export class PlayerController {
     private inputManager: InputManager;
@@ -8,6 +9,7 @@ export class PlayerController {
     private playerMesh!: THREE.Mesh;
     private velocity: THREE.Vector3;
     private isGrounded: boolean = true;
+    private mobileControls: MobileControls;
     
     // Movement settings
     private moveSpeed: number = 5;
@@ -26,6 +28,9 @@ export class PlayerController {
         this.velocity = new THREE.Vector3();
         this.cameraOffset = new THREE.Vector3(0, 2, 5);
         this.cameraRotation = new THREE.Euler(0, 0, 0, 'YXZ');
+        
+        // Initialize mobile controls
+        this.mobileControls = new MobileControls(inputManager);
         
         this.createPlayer();
         this.setupCamera();
@@ -60,6 +65,9 @@ export class PlayerController {
     }
     
     update(deltaTime: number): void {
+        // Update mobile controls first
+        this.mobileControls.update();
+        
         this.handleInput(deltaTime);
         this.updatePhysics(deltaTime);
         this.updateCameraPosition();
@@ -85,6 +93,20 @@ export class PlayerController {
         const moveVector = new THREE.Vector3();
         let isRunning = false;
         
+        // Handle mobile input
+        if (this.inputManager.isMobileDevice()) {
+            const joystickState = this.mobileControls.getJoystickState();
+            if (joystickState.active) {
+                moveVector.x = joystickState.normalizedX;
+                moveVector.z = joystickState.normalizedY;
+            }
+            
+            if (this.mobileControls.isRunPressed()) {
+                isRunning = true;
+            }
+        }
+        
+        // Handle keyboard input (desktop/gamepad)
         if (input.isKeyPressed('KeyW')) moveVector.z -= 1;
         if (input.isKeyPressed('KeyS')) moveVector.z += 1;
         if (input.isKeyPressed('KeyA')) moveVector.x -= 1;
@@ -128,7 +150,10 @@ export class PlayerController {
         }
         
         // Jumping
-        if (input.isKeyPressed('Space') && this.isGrounded) {
+        const shouldJump = input.isKeyPressed('Space') || 
+                          (this.inputManager.isMobileDevice() && this.mobileControls.isJumpPressed());
+        
+        if (shouldJump && this.isGrounded) {
             this.velocity.y = this.jumpSpeed;
             this.isGrounded = false;
         }
@@ -217,16 +242,24 @@ export class PlayerController {
     }
     
     private handleCombatInput(input: InputManager): void {
-        // Attack input - Left mouse button or 'F' key
-        if (input.isKeyPressed('KeyF') || input.isMouseButtonPressed(0)) {
+        // Attack input - Left mouse button, 'F' key, or mobile attack button
+        const shouldAttack = input.isKeyPressed('KeyF') || 
+                            input.isMouseButtonPressed(0) ||
+                            (this.inputManager.isMobileDevice() && this.mobileControls.isAttackPressed());
+        
+        if (shouldAttack) {
             // Combat will be handled by the Game class through the CombatSystem
             // Emit event that game can listen for
             const event = new CustomEvent('playerAttack');
             window.dispatchEvent(event);
         }
         
-        // Interaction input - 'E' key or right mouse button
-        if (input.isKeyPressed('KeyE') || input.isMouseButtonPressed(2)) {
+        // Interaction input - 'E' key, right mouse button, or mobile interact button
+        const shouldInteract = input.isKeyPressed('KeyE') || 
+                              input.isMouseButtonPressed(2) ||
+                              (this.inputManager.isMobileDevice() && this.mobileControls.isInteractPressed());
+        
+        if (shouldInteract) {
             const event = new CustomEvent('playerInteract');
             window.dispatchEvent(event);
         }
@@ -262,5 +295,11 @@ export class PlayerController {
     
     isRunning(): boolean {
         return this.velocity.length() > this.moveSpeed + 1;
+    }
+    
+    cleanup(): void {
+        if (this.mobileControls) {
+            this.mobileControls.cleanup();
+        }
     }
 }
