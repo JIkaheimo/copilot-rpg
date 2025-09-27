@@ -132,6 +132,7 @@ export class CombatSystem {
     private processCombatInteractions(_deltaTime: number): void {
         // This method can be expanded for area damage, spell effects, etc.
         // Currently handled through direct attack methods
+        void _deltaTime;
     }
     
     // Public combat methods

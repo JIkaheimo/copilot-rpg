@@ -230,6 +230,7 @@ export class InteractionSystem {
         
         // Update interactive object states (animations, etc.)
         // This can be expanded for more complex behaviors
+        void _deltaTime;
     }
     
     getInteractablesInRange(position: THREE.Vector3, range: number): InteractableObject[] {
