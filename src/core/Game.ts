@@ -104,8 +104,11 @@ export class Game {
         const player = this.playerController.getPlayer();
         this.sceneManager.addToScene(player);
         
-        // Initialize weather and day/night cycle
-        this.weatherSystem.initialize(this.sceneManager.getScene());
+        // Initialize particle system first
+        this.particleSystem.initialize(this.sceneManager.getScene());
+        
+        // Initialize weather and day/night cycle (weather now uses particle system)
+        this.weatherSystem.initialize(this.sceneManager.getScene(), this.particleSystem);
         this.dayNightCycle.initialize(this.sceneManager.getScene());
         
         // Initialize lighting system (replaces basic SceneManager lighting)
@@ -116,9 +119,6 @@ export class Game {
         
         // Initialize achievement system
         this.achievementSystem.initialize();
-        
-        // Initialize particle system
-        this.particleSystem.initialize(this.sceneManager.getScene());
         
         // Initialize magic system
         this.magicSystem.initialize(this.sceneManager.getScene(), this.gameState, this.particleSystem);

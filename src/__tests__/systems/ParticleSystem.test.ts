@@ -34,8 +34,14 @@ vi.mock('three', async () => {
             multiplyScalar: vi.fn()
         })),
         Color: vi.fn(() => ({
-            r: 1, g: 0, b: 0
-        }))
+            r: 1, g: 0, b: 0,
+            offsetHSL: vi.fn()
+        })),
+        // Add blending modes
+        AdditiveBlending: 2,
+        NormalBlending: 0,
+        SubtractiveBlending: 3,
+        MultiplyBlending: 4
     };
 });
 
