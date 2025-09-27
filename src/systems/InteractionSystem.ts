@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { GameState } from '@core/GameState';
 import { EventEmitter } from '@core/EventEmitter';
 import { TextureGenerator } from '../utils/TextureGenerator';
+import { AnimationSystem } from './AnimationSystem';
+import { AnimationPresets } from './AnimationPresets';
 
 export interface InteractableObject {
     id: string;
@@ -21,9 +23,14 @@ export class InteractionSystem extends EventEmitter {
     private scene: THREE.Scene | null = null;
     private interactables: Map<string, InteractableObject> = new Map();
     private nextObjectId: number = 1;
+    private animationSystem: AnimationSystem | null = null;
 
     constructor() {
         super('interaction');
+    }
+    
+    setAnimationSystem(animationSystem: AnimationSystem): void {
+        this.animationSystem = animationSystem;
     }
     
     initialize(scene: THREE.Scene): void {
@@ -112,6 +119,11 @@ export class InteractionSystem extends EventEmitter {
         chestGroup.position.copy(position);
         this.scene.add(chestGroup);
         
+        // Add subtle floating animation to make chest more noticeable
+        if (this.animationSystem) {
+            AnimationPresets.createFloatingAnimation(`${chestId}_float`, chestGroup, 0.1, 0.5);
+        }
+        
         const chest: InteractableObject = {
             id: chestId,
             type: 'chest',
@@ -136,9 +148,14 @@ export class InteractionSystem extends EventEmitter {
                     console.log(`📦 Found: ${item.name} x${item.quantity}`);
                 });
                 
-                // Animate chest opening
-                const lid = chest.mesh.children[1];
-                lid.rotation.x = -Math.PI / 3; // Open lid
+                // Animate chest opening with smooth animation
+                if (this.animationSystem) {
+                    AnimationPresets.createChestOpenAnimation(`${chestId}_open`, chest.mesh.children[1] as THREE.Object3D);
+                } else {
+                    // Fallback: instant opening
+                    const lid = chest.mesh.children[1];
+                    lid.rotation.x = -Math.PI / 3; // Open lid
+                }
                 
                 // Change chest color to indicate it's been opened
                 const baseMaterial = (chest.mesh.children[0] as THREE.Mesh).material as THREE.MeshStandardMaterial;
