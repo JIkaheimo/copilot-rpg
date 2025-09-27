@@ -12,6 +12,7 @@ import { EnemySystem } from '../systems/EnemySystem';
 import { InteractionSystem } from '../systems/InteractionSystem';
 import { ParticleSystem } from '../systems/ParticleSystem';
 import { LightingSystem } from '../systems/LightingSystem';
+import { WeaponSystem } from '../systems/WeaponSystem';
 
 export class Game {
     private canvas: HTMLCanvasElement;
@@ -29,6 +30,7 @@ export class Game {
     private interactionSystem: InteractionSystem;
     private particleSystem: ParticleSystem;
     private lightingSystem: LightingSystem;
+    private weaponSystem: WeaponSystem;
     
     private isRunning: boolean = false;
     private lastTime: number = 0;
@@ -63,6 +65,7 @@ export class Game {
         this.interactionSystem = new InteractionSystem();
         this.particleSystem = new ParticleSystem();
         this.lightingSystem = new LightingSystem();
+        this.weaponSystem = new WeaponSystem();
         
         // Initialize player controller
         this.playerController = new PlayerController(
@@ -96,6 +99,9 @@ export class Game {
         // Initialize lighting system (replaces basic SceneManager lighting)
         this.lightingSystem.initialize(this.sceneManager.getScene());
         
+        // Initialize weapon system
+        this.weaponSystem.initialize();
+        
         // Initialize particle system
         this.particleSystem.initialize(this.sceneManager.getScene());
         
@@ -108,6 +114,7 @@ export class Game {
         this.setupCombatIntegration();
         this.setupInteractionIntegration();
         this.setupLightingIntegration();
+        this.setupWeaponIntegration();
         
         // Set up player combat input
         this.setupPlayerCombatInput();
@@ -168,6 +175,18 @@ export class Game {
             const enemy = this.enemySystem.getEnemy(data.enemyId);
             if (enemy) {
                 this.particleSystem.playEffect('death', enemy.position, 2);
+            }
+        });
+        
+        // Integrate weapon system with combat damage calculation
+        this.combatSystem.on('calculatePlayerDamage', (data: any) => {
+            const equippedWeapon = this.weaponSystem.getEquippedWeapon();
+            if (equippedWeapon) {
+                const weaponStats = equippedWeapon.getStats();
+                data.baseDamage = weaponStats.damage;
+                data.critChance = weaponStats.critChance;
+                data.critMultiplier = weaponStats.critMultiplier;
+                data.damageType = weaponStats.damageType;
             }
         });
     }
@@ -262,6 +281,36 @@ export class Game {
         
         crystalPositions.forEach((position) => {
             this.lightingSystem.addCrystalAt(position);
+        });
+    }
+    
+    private setupWeaponIntegration(): void {
+        // Give the player a starting weapon
+        const startingWeapon = this.weaponSystem.createWeapon('iron_sword');
+        if (startingWeapon) {
+            this.weaponSystem.equipWeapon(startingWeapon);
+            
+            // Add weapon visual to player (simplified - in a full game this would be on the player model)
+            const playerPosition = this.playerController.getPosition();
+            startingWeapon.getMesh().position.copy(playerPosition);
+            startingWeapon.getMesh().position.y += 1;
+            this.sceneManager.addToScene(startingWeapon.getMesh());
+        }
+        
+        // Connect weapon effects to combat
+        this.combatSystem.on('playerAttack', () => {
+            const equippedWeapon = this.weaponSystem.getEquippedWeapon();
+            if (equippedWeapon) {
+                // Play weapon-specific particle effects
+                const weaponData = equippedWeapon.getData();
+                if (weaponData.visualConfig.particleEffect) {
+                    const playerPosition = this.playerController.getPosition();
+                    this.particleSystem.playEffect(weaponData.visualConfig.particleEffect, playerPosition, 0.5);
+                }
+                
+                // Damage weapon slightly on use
+                equippedWeapon.damage(0.1);
+            }
         });
     }
     
@@ -409,4 +458,5 @@ export class Game {
     getInteractionSystem(): InteractionSystem { return this.interactionSystem; }
     getParticleSystem(): ParticleSystem { return this.particleSystem; }
     getLightingSystem(): LightingSystem { return this.lightingSystem; }
+    getWeaponSystem(): WeaponSystem { return this.weaponSystem; }
 }
