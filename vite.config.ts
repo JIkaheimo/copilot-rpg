@@ -47,7 +47,8 @@ export default defineConfig({
             'src/systems/PlayerController.ts',
             'src/systems/WeaponSystem.ts',
             'src/systems/MagicSystem.ts',
-            'src/systems/InteractionSystem.ts'
+            'src/systems/InteractionSystem.ts',
+            'src/systems/CraftingSystem.ts'
           ],
           
           // UI components

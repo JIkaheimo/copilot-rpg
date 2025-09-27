@@ -18,6 +18,7 @@ import { MagicSystem } from '@systems/MagicSystem';
 import { LODSystem } from '@systems/LODSystem';
 import { WaterSystem } from '@systems/WaterSystem';
 import { AudioSystem } from '@systems/AudioSystem';
+import { CraftingSystem } from '@systems/CraftingSystem';
 import { EventBus } from '@core/EventBus';
 
 export class Game {
@@ -43,6 +44,7 @@ export class Game {
     private lodSystem: LODSystem;
     private waterSystem: WaterSystem;
     private audioSystem: AudioSystem;
+    private craftingSystem: CraftingSystem;
     
     private isRunning: boolean = false;
     private lastTime: number = 0;
@@ -87,6 +89,7 @@ export class Game {
         this.lodSystem = new LODSystem();
         this.waterSystem = new WaterSystem();
         this.audioSystem = new AudioSystem();
+        this.craftingSystem = new CraftingSystem();
         
         // Initialize player controller
         this.playerController = new PlayerController(
@@ -155,6 +158,12 @@ export class Game {
         
         // Initialize audio system for 3D spatial audio
         this.audioSystem.initialize(this.sceneManager.getScene(), this.sceneManager.getCamera());
+        
+        // Initialize crafting system for item creation
+        this.craftingSystem.initialize(this.sceneManager.getScene(), this.gameState);
+        
+        // Add some starting crafting materials to inventory
+        this.addStartingCraftingMaterials();
         
         // Add initial water bodies to the world
         this.addWorldWater();
@@ -427,6 +436,36 @@ export class Game {
             this.audioSystem.playSoundEffect('magic_cast');
         });
 
+        // Crafting System Integrations
+        this.eventBus.on('crafting:completed', (data: any) => {
+            this.uiManager.showNotification(
+                `🔨 Crafted ${data.recipeName}!`,
+                'success'
+            );
+            
+            // Show experience gained
+            if (data.experienceGained > 0) {
+                this.uiManager.showNotification(
+                    `⚡ +${data.experienceGained} ${data.skill} XP`,
+                    'info'
+                );
+            }
+        });
+
+        this.eventBus.on('crafting:started', (data: any) => {
+            this.uiManager.showNotification(
+                `🔨 Crafting ${data.recipeName}... (${data.duration}s)`,
+                'info'
+            );
+        });
+
+        this.eventBus.on('crafting:cancelled', () => {
+            this.uiManager.showNotification(
+                '❌ Crafting cancelled',
+                'warning'
+            );
+        });
+
         console.log('🚌 EventBus integrations set up');
     }
     
@@ -466,6 +505,10 @@ export class Game {
                 case 'Digit5':
                     event.preventDefault();
                     this.magicSystem.castSpell('shield');
+                    break;
+                case 'KeyC':
+                    event.preventDefault();
+                    this.openCraftingInterface();
                     break;
                 case 'KeyX':
                     event.preventDefault();
@@ -569,6 +612,69 @@ export class Game {
         console.log('🌊 World water bodies added');
     }
     
+    private addStartingCraftingMaterials(): void {
+        // Add basic crafting materials to get players started
+        const startingMaterials = [
+            {
+                id: 'iron_ingot',
+                name: 'Iron Ingot',
+                type: 'resource' as const,
+                rarity: 'common' as const,
+                quantity: 5,
+                description: 'Refined iron ready for crafting',
+                value: 15
+            },
+            {
+                id: 'wood',
+                name: 'Wood',
+                type: 'resource' as const,
+                rarity: 'common' as const,
+                quantity: 8,
+                description: 'Sturdy wood for crafting',
+                value: 3
+            },
+            {
+                id: 'leather',
+                name: 'Leather',
+                type: 'resource' as const,
+                rarity: 'common' as const,
+                quantity: 3,
+                description: 'Tanned animal hide',
+                value: 8
+            },
+            {
+                id: 'healing_herb',
+                name: 'Healing Herb',
+                type: 'resource' as const,
+                rarity: 'common' as const,
+                quantity: 4,
+                description: 'Natural herb with healing properties',
+                value: 12
+            },
+            {
+                id: 'crystal_essence',
+                name: 'Crystal Essence',
+                type: 'resource' as const,
+                rarity: 'rare' as const,
+                quantity: 2,
+                description: 'Magical essence extracted from crystals',
+                value: 50
+            }
+        ];
+
+        startingMaterials.forEach(material => {
+            this.gameState.addItem({
+                ...material,
+                properties: {
+                    description: material.description,
+                    value: material.value
+                }
+            });
+        });
+
+        console.log('🔨 Starting crafting materials added to inventory');
+    }
+    
     private setupStartingWeapon(): void {
         // Give the player a starting weapon
         const startingWeapon = this.weaponSystem.createWeapon('iron_sword');
@@ -621,6 +727,44 @@ export class Game {
         console.log('📂 Game loaded');
     }
     
+    openCraftingInterface(): void {
+        const playerPosition = this.playerController.getPosition();
+        const nearbyStations = this.craftingSystem.getStationsInRange(playerPosition, 10);
+        
+        if (nearbyStations.length === 0) {
+            this.uiManager.showNotification(
+                '🔨 No crafting stations nearby',
+                'warning'
+            );
+            return;
+        }
+        
+        // Get craftable recipes
+        const craftableRecipes = this.craftingSystem.getCraftableRecipes();
+        
+        if (craftableRecipes.length === 0) {
+            this.uiManager.showNotification(
+                '🔨 No recipes available with current materials',
+                'info'
+            );
+        } else {
+            this.uiManager.showNotification(
+                `🔨 Found ${craftableRecipes.length} craftable recipes at nearby stations`,
+                'success'
+            );
+            
+            // In a full implementation, this would open a crafting UI
+            // For now, just show the first available recipe as a demo
+            const firstRecipe = craftableRecipes[0];
+            console.log(`🔨 Available recipe: ${firstRecipe.name} - ${firstRecipe.description}`);
+            
+            // Try to craft the first available recipe as demonstration
+            if (this.craftingSystem.canCraftRecipe(firstRecipe.id)) {
+                this.craftingSystem.startCrafting(firstRecipe.id, playerPosition);
+            }
+        }
+    }
+    
     /**
      * Register character models with LOD system for performance optimization
      */
@@ -671,6 +815,9 @@ export class Game {
         
         // Cleanup audio system resources
         this.audioSystem.cleanup();
+        
+        // Cleanup crafting system resources
+        this.craftingSystem.cleanup();
         
         console.log('⏸️ Game stopped');
     }
@@ -736,6 +883,9 @@ export class Game {
         
         // Update audio system for 3D spatial audio
         this.audioSystem.update(deltaTime);
+        
+        // Update crafting system for recipe progress
+        this.craftingSystem.update(deltaTime);
         
         // Update scene
         this.sceneManager.update(deltaTime);
