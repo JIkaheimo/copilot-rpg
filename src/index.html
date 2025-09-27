@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
     <title>Copilot RPG</title>
     <style>
         * {
@@ -16,6 +16,10 @@
             background: #000;
             color: #fff;
             overflow: hidden;
+            touch-action: none; /* Prevent default touch behaviors */
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
         
         #gameCanvas {
@@ -111,6 +115,49 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        /* Mobile-specific styles */
+        @media (max-width: 768px) {
+            #hud {
+                top: 10px;
+                left: 10px;
+                font-size: 14px;
+            }
+            
+            #minimap {
+                top: 10px;
+                right: 10px;
+                width: 120px;
+                height: 120px;
+            }
+            
+            .health-bar {
+                width: 150px;
+                height: 16px;
+            }
+            
+            #menu {
+                width: 90%;
+                max-width: 400px;
+                padding: 15px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            #hud {
+                font-size: 12px;
+            }
+            
+            #minimap {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .health-bar {
+                width: 120px;
+                height: 14px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -160,11 +207,19 @@
             </div>
             <div style="margin-top: 20px; font-size: 14px; color: #aaa;">
                 <h3>Controls:</h3>
-                <p>WASD - Move | Shift - Run | Space - Jump</p>
-                <p>F Key or Left Click - Attack</p>
-                <p>E Key or Right Click - Interact</p>
-                <p>1-5 Keys - Cast Spells | X - Cancel Spell</p>
-                <p>Mouse - Look around | ESC - Menu</p>
+                <div id="desktopControls">
+                    <p>WASD - Move | Shift - Run | Space - Jump</p>
+                    <p>F Key or Left Click - Attack</p>
+                    <p>E Key or Right Click - Interact</p>
+                    <p>1-5 Keys - Cast Spells | X - Cancel Spell</p>
+                    <p>Mouse - Look around | ESC - Menu</p>
+                </div>
+                <div id="mobileControls" style="display: none;">
+                    <p>Virtual Joystick - Move</p>
+                    <p>Action Buttons - Jump, Attack, Interact, Run</p>
+                    <p>Tap & Drag - Look around</p>
+                    <p>Menu Button - ESC</p>
+                </div>
             </div>
         </div>
     </div>
@@ -175,5 +230,18 @@
     </div>
     
     <script type="module" src="./main.ts"></script>
+    <script>
+        // Show appropriate controls based on device type
+        window.addEventListener('DOMContentLoaded', () => {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                            ('ontouchstart' in window) ||
+                            (navigator.maxTouchPoints > 0);
+            
+            if (isMobile) {
+                document.getElementById('mobileControls').style.display = 'block';
+                document.getElementById('desktopControls').style.display = 'none';
+            }
+        });
+    </script>
 </body>
 </html>

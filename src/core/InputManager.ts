@@ -1,3 +1,13 @@
+export interface TouchState {
+    id: number;
+    x: number;
+    y: number;
+    startX: number;
+    startY: number;
+    deltaX: number;
+    deltaY: number;
+}
+
 export interface InputState {
     keys: { [key: string]: boolean };
     mouse: {
@@ -8,6 +18,8 @@ export interface InputState {
         buttons: { [button: number]: boolean };
     };
     gamepad: Gamepad | null;
+    touches: { [id: number]: TouchState };
+    isMobileDevice: boolean;
 }
 
 export class InputManager {
@@ -28,7 +40,9 @@ export class InputManager {
                 deltaY: 0,
                 buttons: {}
             },
-            gamepad: null
+            gamepad: null,
+            touches: {},
+            isMobileDevice: this.detectMobileDevice()
         };
     }
     
@@ -42,6 +56,12 @@ export class InputManager {
         this.canvas.addEventListener('mousedown', this.onMouseDown.bind(this));
         this.canvas.addEventListener('mouseup', this.onMouseUp.bind(this));
         this.canvas.addEventListener('click', this.onCanvasClick.bind(this));
+        
+        // Touch events for mobile support
+        this.canvas.addEventListener('touchstart', this.onTouchStart.bind(this), { passive: false });
+        this.canvas.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: false });
+        this.canvas.addEventListener('touchend', this.onTouchEnd.bind(this), { passive: false });
+        this.canvas.addEventListener('touchcancel', this.onTouchCancel.bind(this), { passive: false });
         
         // Pointer lock events
         document.addEventListener('pointerlockchange', this.onPointerLockChange.bind(this));
@@ -89,9 +109,74 @@ export class InputManager {
     }
     
     private onCanvasClick(): void {
-        if (!this.pointerLocked) {
+        if (!this.pointerLocked && !this.inputState.isMobileDevice) {
             this.requestPointerLock();
         }
+    }
+    
+    private onTouchStart(event: TouchEvent): void {
+        event.preventDefault();
+        
+        for (let i = 0; i < event.changedTouches.length; i++) {
+            const touch = event.changedTouches[i];
+            const rect = this.canvas.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            
+            this.inputState.touches[touch.identifier] = {
+                id: touch.identifier,
+                x: x,
+                y: y,
+                startX: x,
+                startY: y,
+                deltaX: 0,
+                deltaY: 0
+            };
+        }
+    }
+    
+    private onTouchMove(event: TouchEvent): void {
+        event.preventDefault();
+        
+        for (let i = 0; i < event.changedTouches.length; i++) {
+            const touch = event.changedTouches[i];
+            const touchState = this.inputState.touches[touch.identifier];
+            
+            if (touchState) {
+                const rect = this.canvas.getBoundingClientRect();
+                const newX = touch.clientX - rect.left;
+                const newY = touch.clientY - rect.top;
+                
+                touchState.deltaX = newX - touchState.x;
+                touchState.deltaY = newY - touchState.y;
+                touchState.x = newX;
+                touchState.y = newY;
+            }
+        }
+    }
+    
+    private onTouchEnd(event: TouchEvent): void {
+        event.preventDefault();
+        
+        for (let i = 0; i < event.changedTouches.length; i++) {
+            const touch = event.changedTouches[i];
+            delete this.inputState.touches[touch.identifier];
+        }
+    }
+    
+    private onTouchCancel(event: TouchEvent): void {
+        event.preventDefault();
+        
+        for (let i = 0; i < event.changedTouches.length; i++) {
+            const touch = event.changedTouches[i];
+            delete this.inputState.touches[touch.identifier];
+        }
+    }
+    
+    private detectMobileDevice(): boolean {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+               ('ontouchstart' in window) ||
+               (navigator.maxTouchPoints > 0);
     }
     
     private onPointerLockChange(): void {
@@ -174,6 +259,23 @@ export class InputManager {
         return this.pointerLocked;
     }
     
+    // Touch input methods
+    getTouches(): { [id: number]: TouchState } {
+        return this.inputState.touches;
+    }
+    
+    getTouchById(id: number): TouchState | null {
+        return this.inputState.touches[id] || null;
+    }
+    
+    getActiveTouches(): TouchState[] {
+        return Object.values(this.inputState.touches);
+    }
+    
+    isMobileDevice(): boolean {
+        return this.inputState.isMobileDevice;
+    }
+    
     cleanup(): void {
         // Remove keyboard events
         document.removeEventListener('keydown', this.onKeyDown.bind(this));
@@ -185,6 +287,12 @@ export class InputManager {
         this.canvas.removeEventListener('mouseup', this.onMouseUp.bind(this));
         this.canvas.removeEventListener('click', this.onCanvasClick.bind(this));
         this.canvas.removeEventListener('contextmenu', (e) => e.preventDefault());
+        
+        // Remove touch events
+        this.canvas.removeEventListener('touchstart', this.onTouchStart.bind(this));
+        this.canvas.removeEventListener('touchmove', this.onTouchMove.bind(this));
+        this.canvas.removeEventListener('touchend', this.onTouchEnd.bind(this));
+        this.canvas.removeEventListener('touchcancel', this.onTouchCancel.bind(this));
         
         // Remove pointer lock events
         document.removeEventListener('pointerlockchange', this.onPointerLockChange.bind(this));
