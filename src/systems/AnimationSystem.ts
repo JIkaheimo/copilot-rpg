@@ -84,10 +84,12 @@ export class PropertyAnimation implements Animation {
         if (!this.isActive) return true;
         
         const elapsed = currentTime - this.startTime;
-        let progress = Math.min(elapsed / this.duration, 1);
+        let progress = elapsed / this.duration;
         
         if (this.loop && progress >= 1) {
             progress = progress % 1;
+        } else {
+            progress = Math.min(progress, 1);
         }
         
         const easedProgress = this.easingFunction(progress);
@@ -190,10 +192,12 @@ export class KeyframeAnimation implements Animation {
         if (!this.isActive) return true;
         
         const elapsed = currentTime - this.startTime;
-        let progress = Math.min(elapsed / this.duration, 1);
+        let progress = elapsed / this.duration;
         
         if (this.loop && progress >= 1) {
             progress = progress % 1;
+        } else {
+            progress = Math.min(progress, 1);
         }
         
         // Update each keyframe property
