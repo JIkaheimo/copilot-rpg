@@ -1,3 +1,5 @@
+import { EventEmitter } from '@core/EventEmitter';
+
 export interface PlayerStats {
     level: number;
     experience: number;
@@ -64,7 +66,7 @@ export interface WorldState {
     worldEvents: string[];
 }
 
-export class GameState {
+export class GameState extends EventEmitter {
     public player!: PlayerStats;
     public inventory: InventoryItem[];
     public equipment: { [slot: string]: InventoryItem | null };
@@ -72,9 +74,8 @@ export class GameState {
     public worldState: WorldState;
     public gameSettings: { [key: string]: any };
     
-    private eventListeners: { [event: string]: Function[] } = {};
-    
     constructor() {
+        super('gameState');
         this.initializePlayerStats();
         this.inventory = [];
         this.equipment = {
@@ -279,29 +280,13 @@ export class GameState {
         this.emit('questCompleted', quest);
     }
     
-    // Event system
-    on(event: string, callback: Function): void {
-        if (!this.eventListeners[event]) {
-            this.eventListeners[event] = [];
-        }
-        this.eventListeners[event].push(callback);
+    // Public methods for external systems to subscribe to events
+    public subscribe(event: string, callback: (data?: any) => void): void {
+        this.on(event, callback);
     }
     
-    off(event: string, callback: Function): void {
-        if (!this.eventListeners[event]) return;
-        
-        const index = this.eventListeners[event].indexOf(callback);
-        if (index > -1) {
-            this.eventListeners[event].splice(index, 1);
-        }
-    }
-    
-    private emit(event: string, data?: any): void {
-        if (!this.eventListeners[event]) return;
-        
-        this.eventListeners[event].forEach(callback => {
-            callback(data);
-        });
+    public unsubscribe(event: string, callback?: (data?: any) => void): void {
+        this.off(event, callback);
     }
     
     // Serialization methods for save/load

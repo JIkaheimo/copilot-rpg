@@ -13,7 +13,7 @@ export class TextureGenerator {
                 if (ctx) {
                     this.ctx = ctx;
                 }
-            } catch (e) {
+            } catch {
                 // Canvas not available
             }
         }
@@ -331,7 +331,7 @@ export class TextureGenerator {
                 texture.needsUpdate = true;
                 return texture;
             }
-        } catch (e) {
+        } catch {
             // Fall through to basic texture
         }
         

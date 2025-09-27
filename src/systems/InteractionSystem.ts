@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GameState } from '@core/GameState';
+import { EventEmitter } from '@core/EventEmitter';
 import { TextureGenerator } from '../utils/TextureGenerator';
 
 export interface InteractableObject {
@@ -15,12 +16,15 @@ export interface InteractableObject {
     data?: any; // Additional object-specific data
 }
 
-export class InteractionSystem {
+export class InteractionSystem extends EventEmitter {
     private initialized: boolean = false;
     private scene: THREE.Scene | null = null;
     private interactables: Map<string, InteractableObject> = new Map();
-    private eventListeners: { [event: string]: Function[] } = {};
     private nextObjectId: number = 1;
+
+    constructor() {
+        super('interaction');
+    }
     
     initialize(scene: THREE.Scene): void {
         this.scene = scene;
@@ -342,31 +346,6 @@ export class InteractionSystem {
         return this.interactables.get(objectId);
     }
     
-    // Event system
-    on(event: string, callback: Function): void {
-        if (!this.eventListeners[event]) {
-            this.eventListeners[event] = [];
-        }
-        this.eventListeners[event].push(callback);
-    }
-    
-    off(event: string, callback: Function): void {
-        if (!this.eventListeners[event]) return;
-        
-        const index = this.eventListeners[event].indexOf(callback);
-        if (index > -1) {
-            this.eventListeners[event].splice(index, 1);
-        }
-    }
-    
-    private emit(event: string, data?: any): void {
-        if (!this.eventListeners[event]) return;
-        
-        this.eventListeners[event].forEach(callback => {
-            callback(data);
-        });
-    }
-    
     cleanup(): void {
         // Remove all interactables from scene
         for (const [, interactable] of this.interactables) {
@@ -376,7 +355,7 @@ export class InteractionSystem {
         }
         
         this.interactables.clear();
-        this.eventListeners = {};
+        super.cleanup(); // Clear EventBus subscriptions
         this.initialized = false;
         console.log('🎯 Interaction system cleaned up');
     }

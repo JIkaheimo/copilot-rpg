@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { EventEmitter } from '@core/EventEmitter';
 
 export interface EnemyData {
     id: string;
@@ -23,12 +24,15 @@ export interface EnemyData {
     homePosition: THREE.Vector3;
 }
 
-export class EnemySystem {
+export class EnemySystem extends EventEmitter {
     private initialized: boolean = false;
     private scene: THREE.Scene | null = null;
     private enemies: Map<string, EnemyData> = new Map();
-    private eventListeners: { [event: string]: Function[] } = {};
     private nextEnemyId: number = 1;
+
+    constructor() {
+        super('enemy');
+    }
     
     // Enemy type definitions
     private enemyTypes = {
@@ -518,34 +522,10 @@ export class EnemySystem {
         console.log('👹 All enemies cleared');
     }
     
-    // Event system
-    on(event: string, callback: Function): void {
-        if (!this.eventListeners[event]) {
-            this.eventListeners[event] = [];
-        }
-        this.eventListeners[event].push(callback);
-    }
-    
-    off(event: string, callback: Function): void {
-        if (!this.eventListeners[event]) return;
-        
-        const index = this.eventListeners[event].indexOf(callback);
-        if (index > -1) {
-            this.eventListeners[event].splice(index, 1);
-        }
-    }
-    
-    private emit(event: string, data?: any): void {
-        if (!this.eventListeners[event]) return;
-        
-        this.eventListeners[event].forEach(callback => {
-            callback(data);
-        });
-    }
     
     cleanup(): void {
         this.clearAllEnemies();
-        this.eventListeners = {};
+        super.cleanup(); // Clear EventBus subscriptions
         this.initialized = false;
         console.log('👹 Enemy system cleaned up');
     }
