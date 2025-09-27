@@ -90,9 +90,9 @@ describe('AnimationSystem', () => {
 
             animationSystem.startAnimation('test_object', animationId);
             
-            // Update to completion in one step (since incremental updates seem to have timing issues)
-            animationSystem.update(1.0);
-            expect(mockTarget.position.y).toBeCloseTo(10, 1);
+            // Check interpolation at midpoint (like the working keyframe test)
+            animationSystem.update(0.5);
+            expect(mockTarget.position.y).toBeCloseTo(5, 1);
         });
 
         it('should handle looping animations', () => {
