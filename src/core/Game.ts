@@ -10,6 +10,8 @@ import { SaveSystem } from '../systems/SaveSystem';
 import { CombatSystem } from '../systems/CombatSystem';
 import { EnemySystem } from '../systems/EnemySystem';
 import { InteractionSystem } from '../systems/InteractionSystem';
+import { ParticleSystem } from '../systems/ParticleSystem';
+import { LightingSystem } from '../systems/LightingSystem';
 
 export class Game {
     private canvas: HTMLCanvasElement;
@@ -25,6 +27,8 @@ export class Game {
     private combatSystem: CombatSystem;
     private enemySystem: EnemySystem;
     private interactionSystem: InteractionSystem;
+    private particleSystem: ParticleSystem;
+    private lightingSystem: LightingSystem;
     
     private isRunning: boolean = false;
     private lastTime: number = 0;
@@ -57,6 +61,8 @@ export class Game {
         this.combatSystem = new CombatSystem();
         this.enemySystem = new EnemySystem();
         this.interactionSystem = new InteractionSystem();
+        this.particleSystem = new ParticleSystem();
+        this.lightingSystem = new LightingSystem();
         
         // Initialize player controller
         this.playerController = new PlayerController(
@@ -87,6 +93,12 @@ export class Game {
         this.weatherSystem.initialize(this.sceneManager.getScene());
         this.dayNightCycle.initialize(this.sceneManager.getScene());
         
+        // Initialize lighting system (replaces basic SceneManager lighting)
+        this.lightingSystem.initialize(this.sceneManager.getScene());
+        
+        // Initialize particle system
+        this.particleSystem.initialize(this.sceneManager.getScene());
+        
         // Initialize combat and enemy systems
         this.combatSystem.initialize(this.sceneManager.getScene(), this.gameState);
         this.enemySystem.initialize(this.sceneManager.getScene());
@@ -95,6 +107,7 @@ export class Game {
         // Set up system integrations
         this.setupCombatIntegration();
         this.setupInteractionIntegration();
+        this.setupLightingIntegration();
         
         // Set up player combat input
         this.setupPlayerCombatInput();
@@ -137,11 +150,25 @@ export class Game {
         this.combatSystem.on('damageDealt', (data: any) => {
             if (data.target !== 'player') {
                 this.enemySystem.damageEnemy(data.target, data.damage.amount);
+                
+                // Play hit particle effect
+                const enemy = this.enemySystem.getEnemy(data.target);
+                if (enemy) {
+                    this.particleSystem.playEffect('hit', enemy.position, 0.5);
+                }
+            } else {
+                // Player was hit - show hit effect at player position
+                const playerPosition = this.playerController.getPosition();
+                this.particleSystem.playEffect('hit', playerPosition, 0.5);
             }
         });
         
-        this.combatSystem.on('enemyDefeated', () => {
-            // Enemy system handles its own cleanup
+        this.combatSystem.on('enemyDefeated', (data: any) => {
+            // Play death particle effect
+            const enemy = this.enemySystem.getEnemy(data.enemyId);
+            if (enemy) {
+                this.particleSystem.playEffect('death', enemy.position, 2);
+            }
         });
     }
     
@@ -159,10 +186,82 @@ export class Game {
     private setupInteractionIntegration(): void {
         this.interactionSystem.on('chestOpened', (data: any) => {
             console.log(`🎯 Opened chest with ${data.items.length} items`);
+            
+            // Play treasure particle effect
+            this.particleSystem.playEffect('treasure', data.position, 1.5);
         });
         
         this.interactionSystem.on('resourceHarvested', (data: any) => {
             console.log(`🎯 Harvested ${data.resourceType}, ${data.remaining} remaining`);
+            
+            // Play hit effect for resource harvesting
+            this.particleSystem.playEffect('hit', data.position, 0.3);
+        });
+        
+        // Connect to game state events for level up effects
+        this.gameState.on('levelUp', (data: any) => {
+            console.log(`🎯 Level up! Now level ${data.newLevel}`);
+            
+            // Play level up particle effect at player position
+            const playerPosition = this.playerController.getPosition();
+            this.particleSystem.playEffect('levelup', playerPosition, 2);
+        });
+    }
+    
+    private setupLightingIntegration(): void {
+        // Add some atmospheric lighting around the world
+        this.addWorldLighting();
+        
+        // Connect lighting to combat events
+        this.combatSystem.on('enemyDefeated', (data: any) => {
+            // Brief magic orb effect when enemy is defeated
+            const enemy = this.enemySystem.getEnemy(data.enemyId);
+            if (enemy) {
+                const lightId = this.lightingSystem.addMagicOrbAt(enemy.position);
+                // Remove the light after 3 seconds
+                setTimeout(() => {
+                    this.lightingSystem.removeLight(lightId);
+                }, 3000);
+            }
+        });
+        
+        // Connect lighting to interaction events
+        this.interactionSystem.on('chestOpened', (data: any) => {
+            // Add a brief crystal light when chest is opened
+            const lightId = this.lightingSystem.addCrystalAt(data.position);
+            setTimeout(() => {
+                this.lightingSystem.removeLight(lightId);
+            }, 5000);
+        });
+    }
+    
+    private addWorldLighting(): void {
+        // Add scattered torches around the world for atmosphere
+        const torchPositions = [
+            new THREE.Vector3(10, 2, 10),
+            new THREE.Vector3(-15, 2, 8),
+            new THREE.Vector3(20, 2, -12),
+            new THREE.Vector3(-8, 2, -20),
+            new THREE.Vector3(0, 2, 25),
+            new THREE.Vector3(-25, 2, 0)
+        ];
+        
+        torchPositions.forEach((position) => {
+            this.lightingSystem.addTorchAt(position);
+        });
+        
+        // Add a central campfire
+        this.lightingSystem.addCampfireAt(new THREE.Vector3(0, 0.5, 0));
+        
+        // Add some magic crystals for mystical ambiance
+        const crystalPositions = [
+            new THREE.Vector3(15, 1, 15),
+            new THREE.Vector3(-12, 1, 18),
+            new THREE.Vector3(22, 1, -8)
+        ];
+        
+        crystalPositions.forEach((position) => {
+            this.lightingSystem.addCrystalAt(position);
         });
     }
     
@@ -214,6 +313,14 @@ export class Game {
         // Update environmental systems
         this.weatherSystem.update(deltaTime);
         this.dayNightCycle.update(deltaTime);
+        
+        // Update lighting system with time of day
+        const currentTime = this.dayNightCycle.getCurrentTime();
+        this.lightingSystem.updateTimeOfDay(currentTime);
+        this.lightingSystem.update(deltaTime);
+        
+        // Update particle system
+        this.particleSystem.update(deltaTime);
         
         // Update combat and enemy systems
         const playerPosition = this.playerController.getPosition();
@@ -300,4 +407,6 @@ export class Game {
     getCombatSystem(): CombatSystem { return this.combatSystem; }
     getEnemySystem(): EnemySystem { return this.enemySystem; }
     getInteractionSystem(): InteractionSystem { return this.interactionSystem; }
+    getParticleSystem(): ParticleSystem { return this.particleSystem; }
+    getLightingSystem(): LightingSystem { return this.lightingSystem; }
 }

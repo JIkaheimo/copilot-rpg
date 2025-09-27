@@ -191,6 +191,11 @@ export class DayNightCycle {
         return this.timeOfDay;
     }
     
+    getCurrentTime(): number {
+        // Return normalized time (0-1) for lighting system
+        return this.timeOfDay / 24;
+    }
+    
     getTimeScale(): number {
         return this.timeScale;
     }
