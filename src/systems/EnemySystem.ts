@@ -152,29 +152,47 @@ export class EnemySystem {
     private createEnemyMesh(enemyType: any, level: number): THREE.Object3D {
         const group = new THREE.Group();
         
+        // Generate a skin texture based on enemy type
+        const skinTexture = this.generateEnemySkinTexture(enemyType.color);
+        
         // Main body
         const bodyGeometry = new THREE.CapsuleGeometry(0.3, 1.2, 4, 8);
-        const bodyMaterial = new THREE.MeshLambertMaterial({ 
-            color: enemyType.color 
+        const bodyMaterial = new THREE.MeshStandardMaterial({ 
+            map: skinTexture,
+            color: enemyType.color,
+            roughness: 0.6,
+            metalness: 0.0
         });
         const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
         body.position.y = 0.6;
+        body.castShadow = true;
+        body.receiveShadow = true;
         group.add(body);
         
         // Level indicator (small sphere on top)
         if (level > 1) {
             const levelGeometry = new THREE.SphereGeometry(0.1, 6, 6);
-            const levelMaterial = new THREE.MeshBasicMaterial({ 
-                color: 0xffff00 
+            const levelMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0xffff00,
+                emissive: 0xffff00,
+                emissiveIntensity: 0.3,
+                metalness: 0.0,
+                roughness: 0.5
             });
             const levelIndicator = new THREE.Mesh(levelGeometry, levelMaterial);
             levelIndicator.position.y = 1.5;
             group.add(levelIndicator);
         }
         
-        // Simple eyes
+        // Glowing eyes
         const eyeGeometry = new THREE.SphereGeometry(0.05, 4, 4);
-        const eyeMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const eyeMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xff0000,
+            emissive: 0xff0000,
+            emissiveIntensity: 0.8,
+            metalness: 0.0,
+            roughness: 0.1
+        });
         
         const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
         leftEye.position.set(-0.1, 1.0, 0.25);
@@ -185,6 +203,80 @@ export class EnemySystem {
         group.add(rightEye);
         
         return group;
+    }
+    
+    private generateEnemySkinTexture(baseColor: number): THREE.Texture {
+        // Fallback for test environment
+        if (typeof document === 'undefined') {
+            // Create a simple data texture for testing
+            const data = new Uint8Array(4); // 1x1 RGBA
+            const r = (baseColor >> 16) & 0xFF;
+            const g = (baseColor >> 8) & 0xFF;  
+            const b = baseColor & 0xFF;
+            
+            data[0] = r; data[1] = g; data[2] = b; data[3] = 255;
+            
+            const texture = new THREE.DataTexture(data, 1, 1, THREE.RGBAFormat);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.needsUpdate = true;
+            return texture;
+        }
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        
+        // Additional fallback if canvas context is not available
+        if (!ctx || typeof ctx.createImageData !== 'function') {
+            // Use basic texture as final fallback
+            const texture = new THREE.Texture();
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.needsUpdate = true;
+            (texture as any).fallbackColor = baseColor;
+            return texture;
+        }
+        
+        const imageData = ctx.createImageData(128, 128);
+        const data = imageData.data;
+        
+        // Extract RGB from base color
+        const r = ((baseColor >> 16) & 0xFF) / 255;
+        const g = ((baseColor >> 8) & 0xFF) / 255;
+        const b = (baseColor & 0xFF) / 255;
+        
+        for (let y = 0; y < 128; y++) {
+            for (let x = 0; x < 128; x++) {
+                const i = (y * 128 + x) * 4;
+                
+                // Add skin-like texture variation
+                const noise = (Math.random() - 0.5) * 0.3;
+                const scalePattern = Math.sin(x * 0.2) * Math.sin(y * 0.2) * 0.1;
+                
+                data[i] = Math.max(0, Math.min(255, (r + noise + scalePattern) * 255));
+                data[i + 1] = Math.max(0, Math.min(255, (g + noise + scalePattern) * 255));
+                data[i + 2] = Math.max(0, Math.min(255, (b + noise + scalePattern) * 255));
+                data[i + 3] = 255;
+                
+                // Add some darker spots for detail
+                if (Math.random() < 0.05) {
+                    data[i] *= 0.7;
+                    data[i + 1] *= 0.7;
+                    data[i + 2] *= 0.7;
+                }
+            }
+        }
+        
+        ctx.putImageData(imageData, 0, 0);
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.needsUpdate = true;
+        
+        return texture;
     }
     
     update(deltaTime: number, playerPosition?: THREE.Vector3): void {

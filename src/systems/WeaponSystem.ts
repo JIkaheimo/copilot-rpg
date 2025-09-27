@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { TextureGenerator } from '../utils/TextureGenerator';
 
 export type WeaponType = 'sword' | 'dagger' | 'bow' | 'staff' | 'axe' | 'mace' | 'spear';
 export type WeaponRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
@@ -202,7 +203,13 @@ export class WeaponInstance {
         const config = this.weaponData.visualConfig;
         const rarityModifier = this.getRarityModifier();
         
+        // Generate a metal texture for the weapon
+        const metalTexture = TextureGenerator.generateMetalTexture(256, config.color);
+        const normalMap = TextureGenerator.generateNormalMap(metalTexture, 0.8);
+        
         const material = new THREE.MeshStandardMaterial({
+            map: metalTexture,
+            normalMap: normalMap,
             color: config.color,
             metalness: config.metalness,
             roughness: config.roughness,

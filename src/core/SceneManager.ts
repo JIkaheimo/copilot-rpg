@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { TextureGenerator } from '../utils/TextureGenerator';
 
 export class SceneManager {
     private renderer: THREE.WebGLRenderer;
@@ -33,9 +34,17 @@ export class SceneManager {
     }
     
     async initialize(): Promise<void> {
-        // Create a basic ground plane
+        // Create a textured ground plane
         const groundGeometry = new THREE.PlaneGeometry(100, 100);
-        const groundMaterial = new THREE.MeshLambertMaterial({ color: 0x00aa00 });
+        const grassTexture = TextureGenerator.generateGrassTexture(512);
+        const grassNormal = TextureGenerator.generateNormalMap(grassTexture, 0.5);
+        
+        const groundMaterial = new THREE.MeshStandardMaterial({ 
+            map: grassTexture,
+            normalMap: grassNormal,
+            roughness: 0.8,
+            metalness: 0.0
+        });
         const ground = new THREE.Mesh(groundGeometry, groundMaterial);
         ground.rotation.x = -Math.PI / 2;
         ground.receiveShadow = true;
@@ -77,17 +86,28 @@ export class SceneManager {
     private createTree(): THREE.Group {
         const tree = new THREE.Group();
         
-        // Trunk
+        // Trunk with bark texture
         const trunkGeometry = new THREE.CylinderGeometry(0.2, 0.3, 3);
-        const trunkMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+        const barkTexture = TextureGenerator.generateBarkTexture(256);
+        const trunkMaterial = new THREE.MeshStandardMaterial({ 
+            map: barkTexture,
+            roughness: 0.9,
+            metalness: 0.0
+        });
         const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
         trunk.position.y = 1.5;
         trunk.castShadow = true;
         tree.add(trunk);
         
-        // Leaves
+        // Leaves with better material
         const leavesGeometry = new THREE.SphereGeometry(2);
-        const leavesMaterial = new THREE.MeshLambertMaterial({ color: 0x228B22 });
+        const leavesMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x228B22,
+            roughness: 0.7,
+            metalness: 0.0,
+            transparent: true,
+            opacity: 0.9
+        });
         const leaves = new THREE.Mesh(leavesGeometry, leavesMaterial);
         leaves.position.y = 4;
         leaves.castShadow = true;
@@ -102,7 +122,12 @@ export class SceneManager {
             8,
             6
         );
-        const rockMaterial = new THREE.MeshLambertMaterial({ color: 0x696969 });
+        const stoneTexture = TextureGenerator.generateStoneTexture(256);
+        const rockMaterial = new THREE.MeshStandardMaterial({ 
+            map: stoneTexture,
+            roughness: 0.8,
+            metalness: 0.0
+        });
         const rock = new THREE.Mesh(rockGeometry, rockMaterial);
         rock.scale.y = 0.7;
         rock.castShadow = true;
