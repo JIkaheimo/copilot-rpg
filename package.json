@@ -29,6 +29,7 @@
     "node": ">=24.0.0"
   },
   "devDependencies": {
+    "@types/eventemitter3": "^1.2.0",
     "@types/three": "^0.180.0",
     "@typescript-eslint/eslint-plugin": "^8.44.0",
     "@typescript-eslint/parser": "^8.44.0",
@@ -45,6 +46,7 @@
   "dependencies": {
     "cannon-es": "^0.20.0",
     "dat.gui": "^0.7.9",
+    "eventemitter3": "^5.0.1",
     "three": "^0.180.0"
   }
 }

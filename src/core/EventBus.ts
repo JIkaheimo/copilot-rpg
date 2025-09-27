@@ -1,7 +1,9 @@
 /**
  * Central EventBus for decoupled communication between game systems
- * Replaces individual event listener implementations in each system
+ * Uses eventemitter3 NPM package for reliable event handling
  */
+
+import EventEmitter from 'eventemitter3';
 
 export interface EventData {
     [key: string]: any;
@@ -9,14 +11,13 @@ export interface EventData {
 
 export type EventCallback = (data?: EventData) => void;
 
-interface EventSubscription {
-    callback: EventCallback;
-    once: boolean;
-}
-
 export class EventBus {
-    private events: Map<string, EventSubscription[]> = new Map();
+    private emitter: EventEmitter;
     private static instance: EventBus | null = null;
+
+    private constructor() {
+        this.emitter = new EventEmitter();
+    }
 
     /**
      * Get singleton instance of EventBus
@@ -32,53 +33,24 @@ export class EventBus {
      * Subscribe to an event
      */
     on(event: string, callback: EventCallback): void {
-        if (!this.events.has(event)) {
-            this.events.set(event, []);
-        }
-        
-        this.events.get(event)!.push({
-            callback,
-            once: false
-        });
+        this.emitter.on(event, callback);
     }
 
     /**
      * Subscribe to an event only once
      */
     once(event: string, callback: EventCallback): void {
-        if (!this.events.has(event)) {
-            this.events.set(event, []);
-        }
-        
-        this.events.get(event)!.push({
-            callback,
-            once: true
-        });
+        this.emitter.once(event, callback);
     }
 
     /**
      * Unsubscribe from an event
      */
     off(event: string, callback?: EventCallback): void {
-        if (!this.events.has(event)) return;
-        
-        const subscriptions = this.events.get(event)!;
-        
-        if (!callback) {
-            // Remove all listeners for this event
-            this.events.delete(event);
-            return;
-        }
-        
-        // Remove specific callback
-        const index = subscriptions.findIndex(sub => sub.callback === callback);
-        if (index > -1) {
-            subscriptions.splice(index, 1);
-            
-            // Clean up empty event arrays
-            if (subscriptions.length === 0) {
-                this.events.delete(event);
-            }
+        if (callback) {
+            this.emitter.off(event, callback);
+        } else {
+            this.emitter.removeAllListeners(event);
         }
     }
 
@@ -86,38 +58,10 @@ export class EventBus {
      * Emit an event to all subscribers
      */
     emit(event: string, data?: EventData): void {
-        if (!this.events.has(event)) return;
-        
-        const subscriptions = this.events.get(event)!.slice(); // Copy to avoid modification during iteration
-        const toRemove: EventSubscription[] = [];
-        
-        subscriptions.forEach(subscription => {
-            try {
-                subscription.callback(data);
-                
-                // Mark one-time subscriptions for removal
-                if (subscription.once) {
-                    toRemove.push(subscription);
-                }
-            } catch (error) {
-                console.error(`Error in event listener for '${event}':`, error);
-            }
-        });
-        
-        // Remove one-time subscriptions
-        if (toRemove.length > 0) {
-            const remainingSubscriptions = this.events.get(event)!;
-            toRemove.forEach(subToRemove => {
-                const index = remainingSubscriptions.indexOf(subToRemove);
-                if (index > -1) {
-                    remainingSubscriptions.splice(index, 1);
-                }
-            });
-            
-            // Clean up empty event arrays
-            if (remainingSubscriptions.length === 0) {
-                this.events.delete(event);
-            }
+        try {
+            this.emitter.emit(event, data);
+        } catch (error) {
+            console.error(`Error in event listener for '${event}':`, error);
         }
     }
 
@@ -125,35 +69,35 @@ export class EventBus {
      * Get all event names that have subscribers
      */
     getEventNames(): string[] {
-        return Array.from(this.events.keys());
+        return this.emitter.eventNames() as string[];
     }
 
     /**
      * Get number of subscribers for an event
      */
     getSubscriberCount(event: string): number {
-        return this.events.get(event)?.length || 0;
+        return this.emitter.listenerCount(event);
     }
 
     /**
      * Clear all event subscriptions
      */
     clear(): void {
-        this.events.clear();
+        this.emitter.removeAllListeners();
     }
 
     /**
      * Clear subscriptions for a specific event
      */
     clearEvent(event: string): void {
-        this.events.delete(event);
+        this.emitter.removeAllListeners(event);
     }
 
     /**
      * Check if an event has any subscribers
      */
     hasSubscribers(event: string): boolean {
-        return this.events.has(event) && this.events.get(event)!.length > 0;
+        return this.emitter.listenerCount(event) > 0;
     }
 
     /**
@@ -182,8 +126,9 @@ export class EventBus {
      */
     debug(): void {
         console.log('🚌 EventBus Debug - Current subscriptions:');
-        for (const [event, subscriptions] of this.events.entries()) {
-            console.log(`  ${event}: ${subscriptions.length} subscriber(s)`);
+        const eventNames = this.getEventNames();
+        for (const event of eventNames) {
+            console.log(`  ${event}: ${this.getSubscriberCount(event)} subscriber(s)`);
         }
     }
 }
