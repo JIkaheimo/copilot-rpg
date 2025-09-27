@@ -183,7 +183,7 @@ export class LODSystem {
             }
         } catch (error) {
             // Fallback in case of any errors
-            console.warn('🎯 LOD System: Error creating low detail material, using fallback');
+            console.warn('🎯 LOD System: Error creating low detail material, using fallback:', error);
         }
         
         // Return a basic material as fallback
