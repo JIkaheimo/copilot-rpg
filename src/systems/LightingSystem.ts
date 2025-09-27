@@ -336,7 +336,9 @@ export class LightingSystem {
         const z = 25;
 
         this.directionalLight.position.set(x, y, z);
-        this.directionalLight.target.position.set(0, 0, 0);
+        if (this.directionalLight.target) {
+            this.directionalLight.target.position.set(0, 0, 0);
+        }
     }
 
     update(deltaTime: number): void {
