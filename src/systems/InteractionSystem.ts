@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GameState } from '@core/GameState';
+import { TextureGenerator } from '../utils/TextureGenerator';
 
 export interface InteractableObject {
     id: string;
@@ -54,28 +55,54 @@ export class InteractionSystem {
         // Create chest visual
         const chestGroup = new THREE.Group();
         
+        // Generate wood texture for chest
+        const woodTexture = TextureGenerator.generateWoodTexture(256);
+        
         // Chest base
         const baseGeometry = new THREE.BoxGeometry(1, 0.8, 0.8);
-        const baseMaterial = new THREE.MeshLambertMaterial({ color: 0x8b4513 });
+        const baseMaterial = new THREE.MeshStandardMaterial({ 
+            map: woodTexture,
+            color: 0x8b4513,
+            roughness: 0.8,
+            metalness: 0.0
+        });
         const base = new THREE.Mesh(baseGeometry, baseMaterial);
         base.position.y = 0.4;
+        base.castShadow = true;
+        base.receiveShadow = true;
         chestGroup.add(base);
         
         // Chest lid
         const lidGeometry = new THREE.BoxGeometry(1, 0.1, 0.8);
-        const lidMaterial = new THREE.MeshLambertMaterial({ color: 0xa0522d });
+        const lidMaterial = new THREE.MeshStandardMaterial({ 
+            map: woodTexture,
+            color: 0xa0522d,
+            roughness: 0.8,
+            metalness: 0.0
+        });
         const lid = new THREE.Mesh(lidGeometry, lidMaterial);
         lid.position.y = 0.85;
+        lid.castShadow = true;
+        lid.receiveShadow = true;
         chestGroup.add(lid);
         
-        // Metal bindings
+        // Metal bindings with metal texture
+        const metalTexture = TextureGenerator.generateMetalTexture(128, 0x444444);
         const bindingGeometry = new THREE.BoxGeometry(1.05, 0.05, 0.05);
-        const bindingMaterial = new THREE.MeshLambertMaterial({ color: 0x444444 });
+        const bindingMaterial = new THREE.MeshStandardMaterial({ 
+            map: metalTexture,
+            color: 0x666666,
+            metalness: 0.8,
+            roughness: 0.3
+        });
         const binding1 = new THREE.Mesh(bindingGeometry, bindingMaterial);
         binding1.position.set(0, 0.6, 0.35);
+        binding1.castShadow = true;
+        chestGroup.add(binding1);
+        
         const binding2 = new THREE.Mesh(bindingGeometry, bindingMaterial);
         binding2.position.set(0, 0.6, -0.35);
-        chestGroup.add(binding1);
+        binding2.castShadow = true;
         chestGroup.add(binding2);
         
         chestGroup.position.copy(position);
@@ -110,7 +137,7 @@ export class InteractionSystem {
                 lid.rotation.x = -Math.PI / 3; // Open lid
                 
                 // Change chest color to indicate it's been opened
-                const baseMaterial = (chest.mesh.children[0] as THREE.Mesh).material as THREE.MeshLambertMaterial;
+                const baseMaterial = (chest.mesh.children[0] as THREE.Mesh).material as THREE.MeshStandardMaterial;
                 baseMaterial.color.setHex(0x654321);
                 
                 this.emit('chestOpened', { chestId, items: chest.data.items });
@@ -131,30 +158,52 @@ export class InteractionSystem {
         let nodeMesh: THREE.Object3D;
         
         if (nodeType === 'tree') {
-            // Create a simple tree
+            // Create a tree with bark texture
             const treeGroup = new THREE.Group();
             
-            // Trunk
+            // Trunk with bark texture
             const trunkGeometry = new THREE.CylinderGeometry(0.2, 0.3, 2);
-            const trunkMaterial = new THREE.MeshLambertMaterial({ color: 0x8b4513 });
+            const barkTexture = TextureGenerator.generateBarkTexture(256);
+            const trunkMaterial = new THREE.MeshStandardMaterial({ 
+                map: barkTexture,
+                roughness: 0.9,
+                metalness: 0.0
+            });
             const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
             trunk.position.y = 1;
+            trunk.castShadow = true;
+            trunk.receiveShadow = true;
             treeGroup.add(trunk);
             
-            // Leaves
+            // Leaves with better material
             const leavesGeometry = new THREE.SphereGeometry(1.2);
-            const leavesMaterial = new THREE.MeshLambertMaterial({ color: 0x228b22 });
+            const leavesMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x228b22,
+                roughness: 0.7,
+                metalness: 0.0,
+                transparent: true,
+                opacity: 0.9
+            });
             const leaves = new THREE.Mesh(leavesGeometry, leavesMaterial);
             leaves.position.y = 2.5;
+            leaves.castShadow = true;
+            leaves.receiveShadow = true;
             treeGroup.add(leaves);
             
             nodeMesh = treeGroup;
         } else {
-            // Create a rock
+            // Create a rock with stone texture
             const rockGeometry = new THREE.DodecahedronGeometry(0.8);
-            const rockMaterial = new THREE.MeshLambertMaterial({ color: 0x696969 });
+            const stoneTexture = TextureGenerator.generateStoneTexture(256);
+            const rockMaterial = new THREE.MeshStandardMaterial({ 
+                map: stoneTexture,
+                roughness: 0.8,
+                metalness: 0.0
+            });
             nodeMesh = new THREE.Mesh(rockGeometry, rockMaterial);
             nodeMesh.position.y = 0.4;
+            nodeMesh.castShadow = true;
+            nodeMesh.receiveShadow = true;
         }
         
         nodeMesh.position.copy(position);
