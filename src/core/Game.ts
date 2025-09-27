@@ -128,11 +128,17 @@ export class Game {
         this.enemySystem.initialize(this.sceneManager.getScene());
         this.interactionSystem.initialize(this.sceneManager.getScene());
         
+        // Set up atmospheric world lighting
+        this.addWorldLighting();
+        
         // Set up system integrations using EventBus
         this.setupEventBusIntegrations();
         
         // Set up player combat input
         this.setupPlayerCombatInput();
+        
+        // Give the player a starting weapon
+        this.setupStartingWeapon();
         
         // Load saved game if available
         await this.saveSystem.loadGame(this.gameState);
@@ -384,34 +390,7 @@ export class Game {
             }
         });
     }
-    
-    private setupLightingIntegration(): void {
-        // Add some atmospheric lighting around the world
-        this.addWorldLighting();
-        
-        // Connect lighting to combat events
-        this.combatSystem.on('enemyDefeated', (data: any) => {
-            // Brief magic orb effect when enemy is defeated
-            const enemy = this.enemySystem.getEnemy(data.enemyId);
-            if (enemy) {
-                const lightId = this.lightingSystem.addMagicOrbAt(enemy.position);
-                // Remove the light after 3 seconds
-                setTimeout(() => {
-                    this.lightingSystem.removeLight(lightId);
-                }, 3000);
-            }
-        });
-        
-        // Connect lighting to interaction events
-        this.interactionSystem.on('chestOpened', (data: any) => {
-            // Add a brief crystal light when chest is opened
-            const lightId = this.lightingSystem.addCrystalAt(data.position);
-            setTimeout(() => {
-                this.lightingSystem.removeLight(lightId);
-            }, 5000);
-        });
-    }
-    
+
     private addWorldLighting(): void {
         // Add scattered torches around the world for atmosphere
         const torchPositions = [
@@ -442,7 +421,7 @@ export class Game {
         });
     }
     
-    private setupWeaponIntegration(): void {
+    private setupStartingWeapon(): void {
         // Give the player a starting weapon
         const startingWeapon = this.weaponSystem.createWeapon('iron_sword');
         if (startingWeapon) {
@@ -454,131 +433,37 @@ export class Game {
             startingWeapon.getMesh().position.y += 1;
             this.sceneManager.addToScene(startingWeapon.getMesh());
         }
-        
-        // Connect weapon effects to combat
-        this.combatSystem.on('playerAttack', () => {
-            const equippedWeapon = this.weaponSystem.getEquippedWeapon();
-            if (equippedWeapon) {
-                // Play weapon-specific particle effects
-                const weaponData = equippedWeapon.getData();
-                if (weaponData.visualConfig.particleEffect) {
-                    const playerPosition = this.playerController.getPosition();
-                    this.particleSystem.playEffect(weaponData.visualConfig.particleEffect, playerPosition, 0.5);
-                }
-                
-                // Damage weapon slightly on use
-                equippedWeapon.damage(0.1);
-            }
-        });
+    }
+
+    // Public methods for combat interaction
+    playerAttack(): boolean {
+        return this.combatSystem.playerAttack();
     }
     
-    private setupAchievementIntegration(): void {
-        // Connect achievements to combat events
-        this.combatSystem.on('enemyDefeated', (data: any) => {
-            const enemy = this.enemySystem.getEnemy(data.enemyId);
-            if (enemy) {
-                this.achievementSystem.trackEnemyDefeat(enemy.type, this.gameState.player.level);
-            }
-        });
-        
-        // Connect achievements to level up events
-        this.gameState.on('levelUp', (data: any) => {
-            this.achievementSystem.trackLevelUp(data.newLevel);
-        });
-        
-        // Connect achievements to interaction events
-        this.interactionSystem.on('chestOpened', () => {
-            this.achievementSystem.trackChestOpened();
-        });
-        
-        this.interactionSystem.on('resourceHarvested', (data: any) => {
-            this.achievementSystem.trackResourceGathered(data.resourceType);
-        });
-        
-        // Connect achievement rewards to game state
-        this.achievementSystem.on('rewardXP', (xp: number) => {
-            this.gameState.addExperience(xp);
-        });
-        
-        this.achievementSystem.on('rewardGold', (gold: number) => {
-            // Add gold to inventory when currency system is implemented
-            console.log(`💰 Awarded ${gold} gold from achievement`);
-        });
-        
-        this.achievementSystem.on('achievementUnlocked', (data: any) => {
-            // Show achievement notification
-            this.uiManager.showNotification(
-                `🏆 Achievement Unlocked: ${data.achievement.name}`,
-                'success'
-            );
-            
-            // Play achievement particle effect
-            const playerPosition = this.playerController.getPosition();
-            this.particleSystem.playEffect('levelup', playerPosition, 3);
-        });
+    canPlayerAttack(): boolean {
+        return this.combatSystem.canPlayerAttack();
     }
     
-    private setupMagicIntegration(): void {
-        // Connect magic system to combat system for spell damage
-        this.magicSystem.on('spellDamage', (data: any) => {
-            // Find enemies in spell area and damage them
-            const enemies = this.enemySystem.getEnemiesInRange(data.position, data.area);
-            enemies.forEach(enemy => {
-                this.combatSystem.dealDamage(enemy.id, {
-                    amount: data.damage,
-                    type: 'magical',
-                    source: 'player',
-                    critical: Math.random() < 0.1 // 10% crit chance for spells
-                });
-            });
-        });
+    getPlayerAttackCooldown(): number {
+        return this.combatSystem.getPlayerAttackCooldown();
+    }
 
-        // Connect magic system to achievement system
-        this.magicSystem.on('spellCastComplete', () => {
-            this.achievementSystem.trackSpellCast();
-        });
-
-        // Connect magic system to UI notifications
-        this.magicSystem.on('spellCastStart', (spell: any) => {
-            this.uiManager.showNotification(
-                `🔮 Casting ${spell.name}...`,
-                'info'
-            );
-        });
-
-        this.magicSystem.on('spellCastProgress', (data: any) => {
-            this.uiManager.updateCastingInfo(data.spell.name, data.progress * 100);
-        });
-
-        this.magicSystem.on('spellCastComplete', () => {
-            this.uiManager.hideCastingInfo();
-        });
-
-        this.magicSystem.on('spellCastCancelled', () => {
-            this.uiManager.hideCastingInfo();
-            this.uiManager.showNotification(
-                'Spell cancelled',
-                'warning'
-            );
-        });
-
-        // Connect status effects to combat
-        this.magicSystem.on('statusEffectApplied', (data: any) => {
-            if (data.target === 'player' && data.effect.type === 'buff') {
-                this.uiManager.showNotification(
-                    `✨ ${data.effect.name} activated`,
-                    'success'
-                );
-            }
-        });
-
-        // Listen for player heal events
-        this.magicSystem.on('playerHealed', (amount: number) => {
-            this.uiManager.showNotification(
-                `💚 Healed for ${amount} health`,
-                'success'
-            );
-        });
+    // Public methods for UI interaction
+    toggleMenu(): void {
+        const menu = document.getElementById('menu');
+        if (menu) {
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        }
+    }
+    
+    async saveGame(): Promise<void> {
+        await this.saveSystem.saveGame(this.gameState);
+        console.log('💾 Game saved');
+    }
+    
+    async loadGame(): Promise<void> {
+        await this.saveSystem.loadGame(this.gameState);
+        console.log('📂 Game loaded');
     }
     
     start(): void {
@@ -688,37 +573,6 @@ export class Game {
         } else {
             this.start();
         }
-    }
-    
-    // Public methods for UI interaction
-    toggleMenu(): void {
-        const menu = document.getElementById('menu');
-        if (menu) {
-            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
-        }
-    }
-    
-    async saveGame(): Promise<void> {
-        await this.saveSystem.saveGame(this.gameState);
-        console.log('💾 Game saved');
-    }
-    
-    async loadGame(): Promise<void> {
-        await this.saveSystem.loadGame(this.gameState);
-        console.log('📂 Game loaded');
-    }
-    
-    // Combat methods for UI integration
-    playerAttack(): boolean {
-        return this.combatSystem.playerAttack();
-    }
-    
-    canPlayerAttack(): boolean {
-        return this.combatSystem.canPlayerAttack();
-    }
-    
-    getPlayerAttackCooldown(): number {
-        return this.combatSystem.getPlayerAttackCooldown();
     }
     
     // Getters for system access
