@@ -16,6 +16,7 @@ import { WeaponSystem } from '@systems/WeaponSystem';
 import { AchievementSystem } from '@systems/AchievementSystem';
 import { MagicSystem } from '@systems/MagicSystem';
 import { LODSystem } from '@systems/LODSystem';
+import { WaterSystem } from '@systems/WaterSystem';
 import { EventBus } from '@core/EventBus';
 
 export class Game {
@@ -39,6 +40,7 @@ export class Game {
     private achievementSystem: AchievementSystem;
     private magicSystem: MagicSystem;
     private lodSystem: LODSystem;
+    private waterSystem: WaterSystem;
     
     private isRunning: boolean = false;
     private lastTime: number = 0;
@@ -81,6 +83,7 @@ export class Game {
         this.achievementSystem = new AchievementSystem();
         this.magicSystem = new MagicSystem();
         this.lodSystem = new LODSystem();
+        this.waterSystem = new WaterSystem();
         
         // Initialize player controller
         this.playerController = new PlayerController(
@@ -143,6 +146,12 @@ export class Game {
         // Initialize LOD system and register character models for performance optimization
         this.lodSystem.initialize(this.sceneManager.getScene(), this.sceneManager.getCamera());
         this.registerCharacterModelsWithLOD();
+        
+        // Initialize water system for realistic water rendering
+        this.waterSystem.initialize(this.sceneManager.getScene(), this.sceneManager.getCamera(), this.renderer);
+        
+        // Add initial water bodies to the world
+        this.addWorldWater();
         
         // Set up atmospheric world lighting
         this.addWorldLighting();
@@ -446,6 +455,70 @@ export class Game {
         });
     }
     
+    private addWorldWater(): void {
+        // Add a central lake for visual appeal and immersion
+        this.waterSystem.createWaterBody({
+            width: 30,
+            height: 30,
+            position: new THREE.Vector3(-10, -0.5, 15),
+            segments: 64,
+            waveHeight: 0.3,
+            waveSpeed: 1.2,
+            color: 0x006994,
+            transparency: 0.8,
+            reflectivity: 0.7,
+            flowDirection: (() => {
+                try {
+                    return new THREE.Vector2(0.3, 0.7);
+                } catch (error) {
+                    return { x: 0.3, y: 0.7 } as any;
+                }
+            })()
+        });
+        
+        // Add a smaller pond near the spawn area
+        this.waterSystem.createWaterBody({
+            width: 15,
+            height: 12,
+            position: new THREE.Vector3(25, -0.3, -8),
+            segments: 32,
+            waveHeight: 0.2,
+            waveSpeed: 0.8,
+            color: 0x0099CC,
+            transparency: 0.75,
+            reflectivity: 0.6,
+            flowDirection: (() => {
+                try {
+                    return new THREE.Vector2(1, 0);
+                } catch (error) {
+                    return { x: 1, y: 0 } as any;
+                }
+            })()
+        });
+        
+        // Add a decorative stream
+        this.waterSystem.createWaterBody({
+            width: 40,
+            height: 4,
+            position: new THREE.Vector3(0, -0.4, -25),
+            segments: 48,
+            waveHeight: 0.15,
+            waveSpeed: 1.8,
+            color: 0x004488,
+            transparency: 0.7,
+            reflectivity: 0.5,
+            flowDirection: (() => {
+                try {
+                    return new THREE.Vector2(1, 0.2);
+                } catch (error) {
+                    return { x: 1, y: 0.2 } as any;
+                }
+            })()
+        });
+        
+        console.log('🌊 World water bodies added');
+    }
+    
     private setupStartingWeapon(): void {
         // Give the player a starting weapon
         const startingWeapon = this.weaponSystem.createWeapon('iron_sword');
@@ -542,6 +615,10 @@ export class Game {
             cancelAnimationFrame(this.animationFrameId);
             this.animationFrameId = null;
         }
+        
+        // Cleanup water system resources
+        this.waterSystem.cleanup();
+        
         console.log('⏸️ Game stopped');
     }
     
@@ -600,6 +677,9 @@ export class Game {
         // Update LOD system for performance optimization
         this.lodSystem.updatePlayerPosition(playerPosition);
         this.lodSystem.update();
+        
+        // Update water system for wave animations and reflections
+        this.waterSystem.update(deltaTime);
         
         // Update scene
         this.sceneManager.update(deltaTime);
