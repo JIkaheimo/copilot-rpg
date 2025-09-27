@@ -139,11 +139,15 @@ describe('SaveSystem', () => {
     });
 
     it('should handle corrupted save data', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation();
       mockLocalStorage.getItem.mockReturnValue('invalid json data');
       
       const result = await saveSystem.loadGame(gameState);
       
       expect(result).toBe(false);
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to load game:', expect.any(SyntaxError));
+      
+      consoleSpy.mockRestore();
     });
   });
 
@@ -205,6 +209,7 @@ describe('SaveSystem', () => {
 
   describe('Error Handling', () => {
     it('should handle localStorage errors during save', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation();
       mockLocalStorage.setItem.mockImplementation(() => {
         throw new Error('Storage quota exceeded');
       });
@@ -212,9 +217,13 @@ describe('SaveSystem', () => {
       const result = await saveSystem.saveGame(gameState);
       
       expect(result).toBe(false);
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to save game:', expect.any(Error));
+      
+      consoleSpy.mockRestore();
     });
 
     it('should handle localStorage errors during load', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation();
       mockLocalStorage.getItem.mockImplementation(() => {
         throw new Error('Storage access denied');
       });
@@ -222,6 +231,9 @@ describe('SaveSystem', () => {
       const result = await saveSystem.loadGame(gameState);
       
       expect(result).toBe(false);
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to load game:', expect.any(Error));
+      
+      consoleSpy.mockRestore();
     });
   });
 });

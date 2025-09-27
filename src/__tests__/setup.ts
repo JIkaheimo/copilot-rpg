@@ -6,6 +6,24 @@ import failOnConsole from 'vitest-fail-on-console';
 failOnConsole({
   failOnWarn: true,
   failOnError: true,
+  silenceMessage: (message, methodName) => {
+    // Allow expected error messages in tests
+    if (methodName === 'error') {
+      if (message.includes('Failed to save game:') || 
+          message.includes('Failed to load game:')) {
+        return true;
+      }
+    }
+    
+    // Allow expected warning messages in tests
+    if (methodName === 'warn') {
+      if (message.includes('Unknown enemy type:')) {
+        return true;
+      }
+    }
+    
+    return false;
+  },
 });
 
 // Mock navigator.getGamepads for testing

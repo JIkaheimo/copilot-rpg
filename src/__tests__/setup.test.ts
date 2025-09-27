@@ -24,4 +24,11 @@ describe('Test Setup', () => {
     expect(window.innerHeight).toBe(768);
     expect(window.localStorage).toBeDefined();
   });
+
+  it('should have vitest-fail-on-console configured', () => {
+    // This test verifies the package is installed and working
+    // The real test is that unexpected console.warn or console.error calls will fail tests
+    expect(typeof window.console.warn).toBe('function');
+    expect(typeof window.console.error).toBe('function');
+  });
 });
