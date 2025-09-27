@@ -34,8 +34,14 @@ vi.mock('three', async () => {
             multiplyScalar: vi.fn()
         })),
         Color: vi.fn(() => ({
-            r: 1, g: 0, b: 0
-        }))
+            r: 1, g: 0, b: 0,
+            offsetHSL: vi.fn()
+        })),
+        // Add blending modes
+        AdditiveBlending: 2,
+        NormalBlending: 0,
+        SubtractiveBlending: 3,
+        MultiplyBlending: 4
     };
 });
 
@@ -196,19 +202,21 @@ describe('ParticleSystem', () => {
             expect(particleSystem.getActiveEffectCount()).toBe(0);
         });
 
-        it('should handle auto-duration effects', (done) => {
+        it('should handle auto-duration effects', async () => {
             const position = new THREE.Vector3(0, 1, 0);
             
             // Play effect with 0.1 second duration
             const effectId = particleSystem.playEffect('hit', position, 0.1);
             expect(effectId).toBeTruthy();
             
-            // Check that effect is stopped after duration
-            setTimeout(() => {
-                // The effect should be stopped (but may still exist until next update)
-                expect(particleSystem.getActiveEffectCount()).toBeLessThanOrEqual(1);
-                done();
-            }, 150);
+            // Wait for the effect to be automatically stopped
+            await new Promise(resolve => {
+                setTimeout(() => {
+                    // The effect should be stopped (but may still exist until next update)
+                    expect(particleSystem.getActiveEffectCount()).toBeLessThanOrEqual(1);
+                    resolve(void 0);
+                }, 150);
+            });
         });
     });
 

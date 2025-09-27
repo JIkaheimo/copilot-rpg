@@ -1,17 +1,28 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { WeatherSystem, WeatherType } from '@systems/WeatherSystem';
+import { ParticleSystem } from '@systems/ParticleSystem';
 import * as THREE from 'three';
 
 // Mock Three.js
 vi.mock('three');
 
+// Mock ParticleSystem  
+vi.mock('@systems/ParticleSystem', () => ({
+    ParticleSystem: vi.fn(() => ({
+        createEnvironmentalEffect: vi.fn(() => 'effect-id'),
+        stopEffect: vi.fn()
+    }))
+}));
+
 describe('WeatherSystem', () => {
   let weatherSystem: WeatherSystem;
   let mockScene: THREE.Scene;
+  let mockParticleSystem: ParticleSystem;
 
   beforeEach(() => {
     weatherSystem = new WeatherSystem();
     mockScene = new THREE.Scene();
+    mockParticleSystem = new ParticleSystem();
   });
 
   describe('Initialization', () => {
@@ -19,19 +30,19 @@ describe('WeatherSystem', () => {
       expect(weatherSystem).toBeDefined();
     });
 
-    it('should initialize with scene', () => {
+    it('should initialize with scene and particle system', () => {
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation();
       
-      weatherSystem.initialize(mockScene);
+      weatherSystem.initialize(mockScene, mockParticleSystem);
       
-      expect(consoleSpy).toHaveBeenCalledWith('🌤️ Weather system initialized');
+      expect(consoleSpy).toHaveBeenCalledWith('🌤️ Weather system initialized with enhanced particle effects');
       consoleSpy.mockRestore();
     });
   });
 
   describe('Weather Management', () => {
     beforeEach(() => {
-      weatherSystem.initialize(mockScene);
+      weatherSystem.initialize(mockScene, mockParticleSystem);
     });
 
     it('should start with clear weather', () => {

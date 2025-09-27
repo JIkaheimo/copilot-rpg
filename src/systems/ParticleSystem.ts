@@ -9,6 +9,14 @@ export interface ParticleEffectConfig {
     velocity: THREE.Vector3;
     gravity: THREE.Vector3;
     fadeOut: boolean;
+    // Enhanced properties for better visuals
+    texture?: string;
+    blendMode?: THREE.Blending;
+    sizeVariation?: number;
+    colorVariation?: number;
+    emissionRate?: number;
+    spiral?: boolean;
+    randomizeColors?: boolean;
 }
 
 export class ParticleEffect {
@@ -66,14 +74,18 @@ export class ParticleEffect {
             this.lifetimes[i] = 0;
             this.maxLifetimes[i] = this.config.lifetime + (Math.random() - 0.5) * this.config.lifetime * 0.5;
 
-            // Color (from config color)
+            // Color with variation
             const color = new THREE.Color(this.config.color);
+            if (this.config.randomizeColors) {
+                color.offsetHSL((Math.random() - 0.5) * 0.2, 0, (Math.random() - 0.5) * 0.3);
+            }
             colors[i3] = color.r;
             colors[i3 + 1] = color.g;
             colors[i3 + 2] = color.b;
 
-            // Size
-            sizes[i] = this.config.size + (Math.random() - 0.5) * this.config.size * 0.3;
+            // Size with variation
+            const sizeVariation = this.config.sizeVariation || 0.3;
+            sizes[i] = this.config.size + (Math.random() - 0.5) * this.config.size * sizeVariation;
         }
 
         // Set attributes
@@ -81,13 +93,16 @@ export class ParticleEffect {
         this.geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
         this.geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
 
-        // Create material
+        // Create enhanced material with better visual options
         this.material = new THREE.PointsMaterial({
             size: this.config.size,
             vertexColors: true,
             transparent: true,
             opacity: 0.8,
-            sizeAttenuation: true
+            sizeAttenuation: true,
+            blending: this.config.blendMode || THREE.AdditiveBlending,
+            depthWrite: false,
+            fog: true
         });
 
         // Create points object
@@ -407,6 +422,112 @@ export class ParticleSystem {
             gravity: new THREE.Vector3(0, 0, 0),
             fadeOut: true
         });
+
+        // Environmental Effects - New enhanced effects
+        
+        // Rain effect
+        this.effectTemplates.set('rain', {
+            particleCount: 200,
+            color: 0x88ccff,
+            size: 0.02,
+            lifetime: 3,
+            spread: 20,
+            velocity: new THREE.Vector3(0, -15, 0),
+            gravity: new THREE.Vector3(0, -5, 0),
+            fadeOut: true,
+            blendMode: THREE.NormalBlending,
+            sizeVariation: 0.1
+        });
+
+        // Snow effect
+        this.effectTemplates.set('snow', {
+            particleCount: 150,
+            color: 0xffffff,
+            size: 0.05,
+            lifetime: 8,
+            spread: 25,
+            velocity: new THREE.Vector3(0, -2, 0),
+            gravity: new THREE.Vector3(0, -0.5, 0),
+            fadeOut: true,
+            blendMode: THREE.NormalBlending,
+            sizeVariation: 0.4,
+            randomizeColors: true
+        });
+
+        // Fog effect
+        this.effectTemplates.set('fog', {
+            particleCount: 80,
+            color: 0xcccccc,
+            size: 1.5,
+            lifetime: 10,
+            spread: 30,
+            velocity: new THREE.Vector3(0.5, 0, 0.5),
+            gravity: new THREE.Vector3(0, 0.1, 0),
+            fadeOut: true,
+            blendMode: THREE.NormalBlending,
+            sizeVariation: 0.6,
+            randomizeColors: true
+        });
+
+        // Leaves falling effect
+        this.effectTemplates.set('leaves', {
+            particleCount: 60,
+            color: 0x44aa22,
+            size: 0.15,
+            lifetime: 6,
+            spread: 15,
+            velocity: new THREE.Vector3(0, -1, 0),
+            gravity: new THREE.Vector3(0, -1, 0),
+            fadeOut: true,
+            blendMode: THREE.NormalBlending,
+            sizeVariation: 0.5,
+            randomizeColors: true
+        });
+
+        // Dust particles
+        this.effectTemplates.set('dust', {
+            particleCount: 40,
+            color: 0xcc9966,
+            size: 0.08,
+            lifetime: 4,
+            spread: 8,
+            velocity: new THREE.Vector3(0, 0.5, 0),
+            gravity: new THREE.Vector3(0, -0.2, 0),
+            fadeOut: true,
+            blendMode: THREE.NormalBlending,
+            sizeVariation: 0.4,
+            randomizeColors: true
+        });
+
+        // Sparkles effect
+        this.effectTemplates.set('sparkles', {
+            particleCount: 100,
+            color: 0xffffcc,
+            size: 0.06,
+            lifetime: 2,
+            spread: 3,
+            velocity: new THREE.Vector3(0, 1, 0),
+            gravity: new THREE.Vector3(0, 0, 0),
+            fadeOut: true,
+            blendMode: THREE.AdditiveBlending,
+            sizeVariation: 0.6,
+            randomizeColors: true
+        });
+
+        // Smoke effect
+        this.effectTemplates.set('smoke', {
+            particleCount: 80,
+            color: 0x666666,
+            size: 0.8,
+            lifetime: 4,
+            spread: 2,
+            velocity: new THREE.Vector3(0, 2, 0),
+            gravity: new THREE.Vector3(0, 0.5, 0),
+            fadeOut: true,
+            blendMode: THREE.NormalBlending,
+            sizeVariation: 0.7,
+            randomizeColors: true
+        });
     }
 
     playEffect(effectName: string, position: THREE.Vector3, duration: number = 0): string {
@@ -488,5 +609,59 @@ export class ParticleSystem {
 
     getActiveEffectCount(): number {
         return this.activeEffects.size;
+    }
+
+    // New method for environmental effects that continuously spawn
+    createEnvironmentalEffect(effectName: string, position: THREE.Vector3, area: number = 10): string {
+        if (!this.scene || !this.effectTemplates.has(effectName)) {
+            console.warn(`Environmental particle effect '${effectName}' not found`);
+            return '';
+        }
+
+        const effectId = `env_${effectName}_${Date.now()}`;
+        
+        // Create multiple instances across the area for better coverage
+        const instances = Math.ceil(area / 5); // One instance per 5 units
+        
+        for (let i = 0; i < instances; i++) {
+            const offsetX = (Math.random() - 0.5) * area;
+            const offsetZ = (Math.random() - 0.5) * area;
+            const instancePosition = new THREE.Vector3(
+                position.x + offsetX,
+                position.y,
+                position.z + offsetZ
+            );
+            
+            this.playEffect(effectName, instancePosition);
+        }
+
+        return effectId;
+    }
+
+    // Method to trigger combat-related effects
+    triggerCombatEffect(effectName: string, position: THREE.Vector3, intensity: number = 1): string {
+        const config = this.effectTemplates.get(effectName);
+        if (!config) {
+            return this.playEffect(effectName, position);
+        }
+
+        // Create scaled version of effect based on intensity
+        const scaledConfig: ParticleEffectConfig = {
+            ...config,
+            particleCount: Math.floor(config.particleCount * intensity),
+            size: config.size * Math.min(intensity, 2),
+            spread: config.spread * intensity
+        };
+
+        const effect = new ParticleEffect(scaledConfig);
+        const effectId = `combat_${effectName}_${Date.now()}_${Math.random()}`;
+
+        if (this.scene) {
+            this.scene.add(effect.getObject3D());
+            effect.start(position);
+            this.activeEffects.set(effectId, effect);
+        }
+
+        return effectId;
     }
 }

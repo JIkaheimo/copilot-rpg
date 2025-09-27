@@ -2,9 +2,9 @@ import * as THREE from 'three';
 import { TextureGenerator } from '../utils/TextureGenerator';
 import { EventEmitter } from '@core/EventEmitter';
 
-export type WeaponType = 'sword' | 'dagger' | 'bow' | 'staff' | 'axe' | 'mace' | 'spear';
-export type WeaponRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
-export type DamageType = 'physical' | 'magical' | 'elemental';
+export type WeaponType = 'sword' | 'dagger' | 'bow' | 'staff' | 'axe' | 'mace' | 'spear' | 'wand' | 'crossbow' | 'hammer' | 'katana' | 'scimitar';
+export type WeaponRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'artifact';
+export type DamageType = 'physical' | 'magical' | 'fire' | 'ice' | 'lightning' | 'holy' | 'shadow' | 'nature';
 
 export interface WeaponStats {
     damage: number;
@@ -13,6 +13,13 @@ export interface WeaponStats {
     speed: number; // Attack speed modifier
     range: number;
     damageType: DamageType;
+    // Enhanced stats
+    accuracy: number; // Hit chance modifier
+    durabilityMax: number;
+    magicDamage?: number; // Additional magic damage
+    elementalDamage?: number; // Additional elemental damage
+    lifesteal?: number; // Percentage of damage returned as health
+    manasteal?: number; // Percentage of damage returned as mana
 }
 
 export interface WeaponData {
@@ -39,6 +46,11 @@ export interface WeaponVisualConfig {
     glowIntensity?: number;
     particleEffect?: string;
     scale: number;
+    // Enhanced visual properties
+    trailEffect?: boolean; // Weapon trail when swinging
+    runes?: boolean; // Glowing runes on weapon
+    aura?: string; // Aura effect around weapon
+    elementalGlow?: boolean; // Glow based on damage type
 }
 
 export class WeaponInstance {
@@ -90,6 +102,16 @@ export class WeaponInstance {
                 return this.createMaceGeometry();
             case 'spear':
                 return this.createSpearGeometry();
+            case 'wand':
+                return this.createWandGeometry();
+            case 'crossbow':
+                return this.createCrossbowGeometry();
+            case 'hammer':
+                return this.createHammerGeometry();
+            case 'katana':
+                return this.createKatanaGeometry();
+            case 'scimitar':
+                return this.createScimitarGeometry();
             default:
                 return new THREE.BoxGeometry(0.1, 1, 0.1);
         }
@@ -200,6 +222,94 @@ export class WeaponInstance {
         return new THREE.CylinderGeometry(0.02, 0.02, 1.4, 8);
     }
 
+    // New enhanced weapon geometries
+    private createWandGeometry(): THREE.BufferGeometry {
+        // Magical wand - thin cylinder with ornate top
+        return new THREE.CylinderGeometry(0.01, 0.015, 0.6, 8);
+    }
+
+    private createCrossbowGeometry(): THREE.BufferGeometry {
+        // Crossbow stock
+        return new THREE.BoxGeometry(0.05, 0.05, 0.8);
+    }
+
+    private createHammerGeometry(): THREE.BufferGeometry {
+        // War hammer handle
+        return new THREE.CylinderGeometry(0.04, 0.04, 0.9, 8);
+    }
+
+    private createKatanaGeometry(): THREE.BufferGeometry {
+        const geometry = new THREE.BufferGeometry();
+        
+        // Curved katana blade
+        const vertices = new Float32Array([
+            // Curved blade tip
+            0, 0, 0,
+            -0.018, -0.9, 0,
+            0.018, -0.9, 0,
+            
+            // Guard
+            -0.08, -0.9, 0,
+            0.08, -0.9, 0,
+            -0.08, -0.92, 0,
+            0.08, -0.92, 0,
+            
+            // Handle (wrapped)
+            -0.02, -0.92, 0,
+            0.02, -0.92, 0,
+            -0.02, -1.15, 0,
+            0.02, -1.15, 0,
+        ]);
+        
+        const indices = new Uint16Array([
+            0, 1, 2,
+            3, 4, 5, 4, 6, 5,
+            7, 8, 9, 8, 10, 9
+        ]);
+        
+        geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+        geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+        geometry.computeVertexNormals();
+        
+        return geometry;
+    }
+
+    private createScimitarGeometry(): THREE.BufferGeometry {
+        const geometry = new THREE.BufferGeometry();
+        
+        // Curved scimitar
+        const vertices = new Float32Array([
+            // Curved blade
+            0, 0, 0,
+            -0.025, -0.85, 0,
+            0.025, -0.85, 0,
+            
+            // Curved guard
+            -0.12, -0.85, 0,
+            0.06, -0.85, 0,
+            -0.12, -0.88, 0,
+            0.06, -0.88, 0,
+            
+            // Handle
+            -0.025, -0.88, 0,
+            0.025, -0.88, 0,
+            -0.025, -1.08, 0,
+            0.025, -1.08, 0,
+        ]);
+        
+        const indices = new Uint16Array([
+            0, 1, 2,
+            3, 4, 5, 4, 6, 5,
+            7, 8, 9, 8, 10, 9
+        ]);
+        
+        geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+        geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+        geometry.computeVertexNormals();
+        
+        return geometry;
+    }
+
     private createWeaponMaterial(): THREE.Material {
         const config = this.weaponData.visualConfig;
         const rarityModifier = this.getRarityModifier();
@@ -227,10 +337,11 @@ export class WeaponInstance {
             'uncommon': 1.2,
             'rare': 1.5,
             'epic': 2,
-            'legendary': 3
+            'legendary': 3,
+            'artifact': 5
         };
         
-        return rarityMultipliers[this.weaponData.rarity];
+        return rarityMultipliers[this.weaponData.rarity] || 1;
     }
 
     private setupVisualEffects(): void {
@@ -286,7 +397,13 @@ export class WeaponInstance {
             critMultiplier: this.weaponData.stats.critMultiplier + (this.enchantmentLevel * 0.05),
             speed: this.weaponData.stats.speed,
             range: this.weaponData.stats.range,
-            damageType: this.weaponData.stats.damageType
+            damageType: this.weaponData.stats.damageType,
+            accuracy: this.weaponData.stats.accuracy || 95,
+            durabilityMax: this.weaponData.stats.durabilityMax || 100,
+            magicDamage: this.weaponData.stats.magicDamage,
+            elementalDamage: this.weaponData.stats.elementalDamage,
+            lifesteal: this.weaponData.stats.lifesteal,
+            manasteal: this.weaponData.stats.manasteal
         };
     }
 
@@ -339,20 +456,34 @@ export class WeaponSystem extends EventEmitter {
     }
 
     private createWeaponTemplates(): void {
+        // Helper function to create complete weapon stats
+        const createStats = (
+            damage: number, 
+            critChance: number = 0.05, 
+            critMultiplier: number = 1.5, 
+            speed: number = 1.0, 
+            range: number = 1.2, 
+            damageType: DamageType = 'physical',
+            accuracy: number = 95,
+            durabilityMax: number = 100
+        ): WeaponStats => ({
+            damage,
+            critChance,
+            critMultiplier,
+            speed,
+            range,
+            damageType,
+            accuracy,
+            durabilityMax
+        });
+
         // Common weapons
         this.weaponTemplates.set('iron_sword', {
             id: 'iron_sword',
             name: 'Iron Sword',
             type: 'sword',
             rarity: 'common',
-            stats: {
-                damage: 15,
-                critChance: 0.05,
-                critMultiplier: 1.5,
-                speed: 1.0,
-                range: 1.2,
-                damageType: 'physical'
-            },
+            stats: createStats(15, 0.05, 1.5, 1.0, 1.2, 'physical'),
             description: 'A sturdy iron sword, reliable in combat.',
             visualConfig: {
                 color: 0x707070,
@@ -367,14 +498,7 @@ export class WeaponSystem extends EventEmitter {
             name: 'Steel Dagger',
             type: 'dagger',
             rarity: 'uncommon',
-            stats: {
-                damage: 10,
-                critChance: 0.15,
-                critMultiplier: 2.0,
-                speed: 1.5,
-                range: 0.8,
-                damageType: 'physical'
-            },
+            stats: createStats(10, 0.15, 2.0, 1.5, 0.8, 'physical'),
             description: 'A quick and deadly steel dagger.',
             visualConfig: {
                 color: 0x909090,
@@ -389,14 +513,7 @@ export class WeaponSystem extends EventEmitter {
             name: 'Apprentice Staff',
             type: 'staff',
             rarity: 'rare',
-            stats: {
-                damage: 12,
-                critChance: 0.08,
-                critMultiplier: 1.8,
-                speed: 0.8,
-                range: 2.0,
-                damageType: 'magical'
-            },
+            stats: createStats(12, 0.08, 1.8, 0.8, 2.0, 'magical'),
             description: 'A staff imbued with magical energy.',
             visualConfig: {
                 color: 0x8B4513,
@@ -413,14 +530,7 @@ export class WeaponSystem extends EventEmitter {
             name: 'Flame Sword',
             type: 'sword',
             rarity: 'epic',
-            stats: {
-                damage: 25,
-                critChance: 0.1,
-                critMultiplier: 2.2,
-                speed: 1.1,
-                range: 1.3,
-                damageType: 'elemental'
-            },
+            stats: createStats(25, 0.1, 2.2, 1.1, 1.3, 'fire'),
             description: 'A sword wreathed in eternal flames.',
             visualConfig: {
                 color: 0xff4400,
@@ -442,14 +552,7 @@ export class WeaponSystem extends EventEmitter {
             name: 'Windseeker Bow',
             type: 'bow',
             rarity: 'legendary',
-            stats: {
-                damage: 30,
-                critChance: 0.2,
-                critMultiplier: 2.5,
-                speed: 1.3,
-                range: 4.0,
-                damageType: 'physical'
-            },
+            stats: createStats(30, 0.2, 2.5, 1.3, 4.0, 'physical'),
             description: 'A legendary bow that never misses its mark.',
             visualConfig: {
                 color: 0x00ff88,
