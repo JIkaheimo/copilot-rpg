@@ -280,6 +280,15 @@ export class GameState extends EventEmitter {
         this.emit('questCompleted', quest);
     }
     
+    // Public methods for external systems to subscribe to events
+    public subscribe(event: string, callback: (data?: any) => void): void {
+        this.on(event, callback);
+    }
+    
+    public unsubscribe(event: string, callback?: (data?: any) => void): void {
+        this.off(event, callback);
+    }
+    
     // Serialization methods for save/load
     serialize(): string {
         return JSON.stringify({

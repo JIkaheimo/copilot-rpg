@@ -71,9 +71,9 @@ export class UIManager {
         if (!this.gameState) return;
         
         // Listen to game state events
-        this.gameState.on('healthChanged', this.updateHealthDisplay.bind(this));
-        this.gameState.on('levelUp', this.updateLevelDisplay.bind(this));
-        this.gameState.on('experienceGained', this.updateXPDisplay.bind(this));
+        this.gameState.subscribe('healthChanged', this.updateHealthDisplay.bind(this));
+        this.gameState.subscribe('levelUp', this.updateLevelDisplay.bind(this));
+        this.gameState.subscribe('experienceGained', this.updateXPDisplay.bind(this));
         
         // Keyboard shortcuts
         document.addEventListener('keydown', (event) => {
