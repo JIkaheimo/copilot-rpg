@@ -74,13 +74,12 @@ describe('InteractionSystem', () => {
             
             const consoleSpy = vi.spyOn(console, 'log').mockImplementation();
             
-            // Use reflection to access private method
-            const createChest = (interactionSystem as any).createChest;
-            const chestId = createChest.call(interactionSystem, position, testItems);
+            // Use the new factory-based public API
+            const chestId = interactionSystem.createInteractable('chest', position, { items: testItems });
             
             expect(chestId).toBeTruthy();
             expect(consoleSpy).toHaveBeenCalledWith(
-                '📦 Spawned treasure chest at position',
+                '🎯 Added chest: Treasure Chest at position',
                 expect.any(THREE.Vector3)
             );
             
@@ -100,8 +99,7 @@ describe('InteractionSystem', () => {
                 { id: 'gold', name: 'Gold Coin', type: 'currency', quantity: 5, rarity: 'common' as const, properties: {} }
             ];
             
-            const createChest = (interactionSystem as any).createChest;
-            const chestId = createChest.call(interactionSystem, position, testItems);
+            const chestId = interactionSystem.createInteractable('chest', position, { items: testItems });
             
             const consoleSpy = vi.spyOn(console, 'log').mockImplementation();
             const eventSpy = vi.fn();
@@ -119,7 +117,7 @@ describe('InteractionSystem', () => {
             expect(chest?.data.opened).toBe(true);
             expect(chest?.isInteractable).toBe(false);
             
-            expect(consoleSpy).toHaveBeenCalledWith('📦 Found: Gold Coin x5');
+            expect(consoleSpy).toHaveBeenCalledWith('📦 Found: Gold Coin');
             expect(eventSpy).toHaveBeenCalledWith({
                 chestId,
                 items: testItems
@@ -132,8 +130,8 @@ describe('InteractionSystem', () => {
             const position = new THREE.Vector3(10, 0, 10);
             const testItems = [{ id: 'test', name: 'Test', type: 'misc', quantity: 1, rarity: 'common' as const, properties: {} }];
             
-            const createChest = (interactionSystem as any).createChest;
-            const chestId = createChest.call(interactionSystem, position, testItems);
+            // Use factory pattern instead
+            const chestId = interactionSystem.createInteractable("chest", position, { items: testItems });
             
             // Open chest first time
             interactionSystem.interact(chestId, gameState);
@@ -159,12 +157,12 @@ describe('InteractionSystem', () => {
             
             const consoleSpy = vi.spyOn(console, 'log').mockImplementation();
             
-            const createResourceNode = (interactionSystem as any).createResourceNode;
-            const nodeId = createResourceNode.call(interactionSystem, position, 'tree', 'wood');
+            // Use factory pattern instead
+            const nodeId = interactionSystem.createInteractable("tree", position, { resourceType: "wood" });
             
             expect(nodeId).toBeTruthy();
             expect(consoleSpy).toHaveBeenCalledWith(
-                '🌳 Spawned tree resource node at position',
+                '🎯 Added resource: Tree at position',
                 expect.any(THREE.Vector3)
             );
             
@@ -181,8 +179,8 @@ describe('InteractionSystem', () => {
         it('should create rock resource node', () => {
             const position = new THREE.Vector3(20, 0, 20);
             
-            const createResourceNode = (interactionSystem as any).createResourceNode;
-            const nodeId = createResourceNode.call(interactionSystem, position, 'rock', 'stone');
+            // Use factory pattern instead
+            const nodeId = interactionSystem.createInteractable("rock", position, { resourceType: "stone" });
             
             const node = interactionSystem.getInteractable(nodeId);
             expect(node?.name).toBe('Rock');
@@ -192,8 +190,8 @@ describe('InteractionSystem', () => {
         it('should harvest resources from nodes', () => {
             const position = new THREE.Vector3(15, 0, 15);
             
-            const createResourceNode = (interactionSystem as any).createResourceNode;
-            const nodeId = createResourceNode.call(interactionSystem, position, 'tree', 'wood');
+            // Use factory pattern instead
+            const nodeId = interactionSystem.createInteractable("tree", position, { resourceType: "wood" });
             
             const consoleSpy = vi.spyOn(console, 'log').mockImplementation();
             const eventSpy = vi.fn();
@@ -227,8 +225,8 @@ describe('InteractionSystem', () => {
         it('should deplete resource nodes after max harvests', () => {
             const position = new THREE.Vector3(15, 0, 15);
             
-            const createResourceNode = (interactionSystem as any).createResourceNode;
-            const nodeId = createResourceNode.call(interactionSystem, position, 'tree', 'wood');
+            // Use factory pattern instead
+            const nodeId = interactionSystem.createInteractable("tree", position, { resourceType: "wood" });
             
             const node = interactionSystem.getInteractable(nodeId);
             const maxHarvest = node!.data.maxHarvest;
@@ -254,8 +252,8 @@ describe('InteractionSystem', () => {
         it('should respawn depleted resource nodes', () => {
             const position = new THREE.Vector3(15, 0, 15);
             
-            const createResourceNode = (interactionSystem as any).createResourceNode;
-            const nodeId = createResourceNode.call(interactionSystem, position, 'tree', 'wood');
+            // Use factory pattern instead
+            const nodeId = interactionSystem.createInteractable("tree", position, { resourceType: "wood" });
             
             const node = interactionSystem.getInteractable(nodeId);
             const maxHarvest = node!.data.maxHarvest;
@@ -282,8 +280,8 @@ describe('InteractionSystem', () => {
         it('should scale resource node size based on harvest count', () => {
             const position = new THREE.Vector3(15, 0, 15);
             
-            const createResourceNode = (interactionSystem as any).createResourceNode;
-            const nodeId = createResourceNode.call(interactionSystem, position, 'tree', 'wood');
+            // Use factory pattern instead
+            const nodeId = interactionSystem.createInteractable("tree", position, { resourceType: "wood" });
             
             const node = interactionSystem.getInteractable(nodeId);
             const initialScale = node!.mesh.scale.x;
@@ -322,8 +320,8 @@ describe('InteractionSystem', () => {
             const position = new THREE.Vector3(5, 0, 5);
             const testItems = [{ id: 'test', name: 'Test', type: 'misc', quantity: 1, rarity: 'common' as const, properties: {} }];
             
-            const createChest = (interactionSystem as any).createChest;
-            const chestId = createChest.call(interactionSystem, position, testItems);
+            // Use factory pattern instead
+            const chestId = interactionSystem.createInteractable("chest", position, { items: testItems });
             
             // Open the chest to make it non-interactable
             interactionSystem.interact(chestId, gameState);
