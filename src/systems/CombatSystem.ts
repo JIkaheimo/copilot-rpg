@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GameState } from '@core/GameState';
+import { EventEmitter } from '@core/EventEmitter';
 
 export interface DamageData {
     amount: number;
@@ -21,11 +22,14 @@ export interface CombatEntity {
     isPlayer: boolean;
 }
 
-export class CombatSystem {
+export class CombatSystem extends EventEmitter {
     private initialized: boolean = false;
     private entities: Map<string, CombatEntity> = new Map();
-    private eventListeners: { [event: string]: Function[] } = {};
     private gameState: GameState | null = null;
+
+    constructor() {
+        super('combat');
+    }
     
     initialize(_scene: THREE.Scene, gameState: GameState): void {
         this.gameState = gameState;
@@ -337,34 +341,9 @@ export class CombatSystem {
         return player ? Math.max(0, player.lastAttackTime) : 0;
     }
     
-    // Event system
-    on(event: string, callback: Function): void {
-        if (!this.eventListeners[event]) {
-            this.eventListeners[event] = [];
-        }
-        this.eventListeners[event].push(callback);
-    }
-    
-    off(event: string, callback: Function): void {
-        if (!this.eventListeners[event]) return;
-        
-        const index = this.eventListeners[event].indexOf(callback);
-        if (index > -1) {
-            this.eventListeners[event].splice(index, 1);
-        }
-    }
-    
-    private emit(event: string, data?: any): void {
-        if (!this.eventListeners[event]) return;
-        
-        this.eventListeners[event].forEach(callback => {
-            callback(data);
-        });
-    }
-    
     cleanup(): void {
         this.entities.clear();
-        this.eventListeners = {};
+        super.cleanup(); // Clear EventBus subscriptions
         this.initialized = false;
         console.log('⚔️ Combat system cleaned up');
     }

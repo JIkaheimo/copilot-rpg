@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { TextureGenerator } from '../utils/TextureGenerator';
+import { EventEmitter } from '@core/EventEmitter';
 
 export type WeaponType = 'sword' | 'dagger' | 'bow' | 'staff' | 'axe' | 'mace' | 'spear';
 export type WeaponRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
@@ -323,28 +324,18 @@ export class WeaponInstance {
     }
 }
 
-export class WeaponSystem {
+export class WeaponSystem extends EventEmitter {
     private weaponTemplates: Map<string, WeaponData> = new Map();
     private equippedWeapon: WeaponInstance | null = null;
     private weaponInventory: Map<string, WeaponInstance> = new Map();
-    private listeners: { [event: string]: Function[] } = {};
+
+    constructor() {
+        super('weapon');
+    }
     
     initialize(): void {
         this.createWeaponTemplates();
         console.log('⚔️ Weapon System initialized');
-    }
-
-    // Event handling
-    on(event: string, callback: Function): void {
-        if (!this.listeners[event]) {
-            this.listeners[event] = [];
-        }
-        this.listeners[event].push(callback);
-    }
-
-    private emit(event: string, data?: any): void {
-        if (!this.listeners[event]) return;
-        this.listeners[event].forEach(callback => callback(data));
     }
 
     private createWeaponTemplates(): void {

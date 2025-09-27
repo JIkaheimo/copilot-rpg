@@ -15,9 +15,11 @@ import { LightingSystem } from '@systems/LightingSystem';
 import { WeaponSystem } from '@systems/WeaponSystem';
 import { AchievementSystem } from '@systems/AchievementSystem';
 import { MagicSystem } from '@systems/MagicSystem';
+import { EventBus } from '@core/EventBus';
 
 export class Game {
     private canvas: HTMLCanvasElement;
+    private eventBus: EventBus;
     private renderer: THREE.WebGLRenderer;
     private sceneManager: SceneManager;
     private inputManager: InputManager;
@@ -42,6 +44,9 @@ export class Game {
     
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
+        
+        // Initialize EventBus first
+        this.eventBus = EventBus.getInstance();
         
         // Initialize Three.js renderer
         this.renderer = new THREE.WebGLRenderer({ 
@@ -123,13 +128,8 @@ export class Game {
         this.enemySystem.initialize(this.sceneManager.getScene());
         this.interactionSystem.initialize(this.sceneManager.getScene());
         
-        // Set up system integrations
-        this.setupCombatIntegration();
-        this.setupInteractionIntegration();
-        this.setupLightingIntegration();
-        this.setupWeaponIntegration();
-        this.setupAchievementIntegration();
-        this.setupMagicIntegration();
+        // Set up system integrations using EventBus
+        this.setupEventBusIntegrations();
         
         // Set up player combat input
         this.setupPlayerCombatInput();
@@ -143,9 +143,9 @@ export class Game {
         this.start();
     }
     
-    private setupCombatIntegration(): void {
-        // Connect enemy system to combat system
-        this.enemySystem.on('enemySpawned', (enemy: any) => {
+    private setupEventBusIntegrations(): void {
+        // Combat System Integrations
+        this.eventBus.on('enemy:enemySpawned', (enemy: any) => {
             this.combatSystem.addEnemy(enemy.id, enemy.position, {
                 health: enemy.health,
                 maxHealth: enemy.maxHealth,
@@ -154,12 +154,12 @@ export class Game {
                 attackRange: enemy.attackRange
             });
         });
-        
-        this.enemySystem.on('enemyKilled', (data: any) => {
+
+        this.eventBus.on('enemy:enemyKilled', (data: any) => {
             this.combatSystem.removeEnemy(data.enemyId);
         });
-        
-        this.enemySystem.on('enemyAttack', (data: any) => {
+
+        this.eventBus.on('enemy:enemyAttack', (data: any) => {
             this.combatSystem.dealDamage('player', {
                 amount: data.damage,
                 type: 'physical',
@@ -167,9 +167,8 @@ export class Game {
                 critical: false
             });
         });
-        
-        // Connect combat system to enemy system  
-        this.combatSystem.on('damageDealt', (data: any) => {
+
+        this.eventBus.on('combat:damageDealt', (data: any) => {
             if (data.target !== 'player') {
                 this.enemySystem.damageEnemy(data.target, data.damage.amount);
                 
@@ -178,32 +177,167 @@ export class Game {
                 if (enemy) {
                     this.particleSystem.playEffect('hit', enemy.position, 0.5);
                 }
-            } else {
-                // Player was hit - show hit effect at player position
-                const playerPosition = this.playerController.getPosition();
-                this.particleSystem.playEffect('hit', playerPosition, 0.5);
             }
         });
-        
-        this.combatSystem.on('enemyDefeated', (data: any) => {
-            // Play death particle effect
+
+        this.eventBus.on('combat:enemyDefeated', (data: any) => {
             const enemy = this.enemySystem.getEnemy(data.enemyId);
             if (enemy) {
-                this.particleSystem.playEffect('death', enemy.position, 2);
+                this.gameState.addExperience(enemy.experienceReward);
+                this.particleSystem.playEffect('enemyDeath', enemy.position, 1.5);
+                
+                // Brief magic orb effect when enemy is defeated
+                const lightId = this.lightingSystem.addMagicOrbAt(enemy.position);
+                setTimeout(() => {
+                    this.lightingSystem.removeLight(lightId);
+                }, 3000);
             }
         });
-        
-        // Integrate weapon system with combat damage calculation
-        this.combatSystem.on('calculatePlayerDamage', (data: any) => {
+
+        this.eventBus.on('combat:playerAttack', () => {
             const equippedWeapon = this.weaponSystem.getEquippedWeapon();
             if (equippedWeapon) {
+                // Update weapon stats for combat calculation
                 const weaponStats = equippedWeapon.getStats();
-                data.baseDamage = weaponStats.damage;
-                data.critChance = weaponStats.critChance;
-                data.critMultiplier = weaponStats.critMultiplier;
-                data.damageType = weaponStats.damageType;
+                this.eventBus.emit('weapon:statsUpdate', {
+                    baseDamage: weaponStats.damage,
+                    critChance: weaponStats.critChance,
+                    critMultiplier: weaponStats.critMultiplier,
+                    damageType: weaponStats.damageType
+                });
+                
+                // Play weapon-specific particle effects
+                const weaponData = equippedWeapon.getData();
+                if (weaponData.visualConfig.particleEffect) {
+                    const playerPosition = this.playerController.getPosition();
+                    this.particleSystem.playEffect(weaponData.visualConfig.particleEffect, playerPosition, 0.5);
+                }
+                
+                // Damage weapon slightly on use
+                equippedWeapon.damage(0.1);
             }
         });
+
+        // Interaction System Integrations
+        this.eventBus.on('interaction:chestOpened', (data: any) => {
+            console.log(`🎯 Opened chest with ${data.items.length} items`);
+            
+            // Play treasure particle effect
+            this.particleSystem.playEffect('treasure', data.position, 1.5);
+            
+            // Add a brief crystal light when chest is opened
+            const lightId = this.lightingSystem.addCrystalAt(data.position);
+            setTimeout(() => {
+                this.lightingSystem.removeLight(lightId);
+            }, 5000);
+        });
+
+        this.eventBus.on('interaction:resourceHarvested', (data: any) => {
+            console.log(`🎯 Harvested ${data.resourceType}, ${data.remaining} remaining`);
+            
+            // Play hit effect for resource harvesting
+            this.particleSystem.playEffect('hit', data.position, 0.3);
+        });
+
+        this.eventBus.on('interaction:chestOpened', () => {
+            this.achievementSystem.trackChestOpened();
+        });
+
+        this.eventBus.on('interaction:resourceHarvested', (data: any) => {
+            this.achievementSystem.trackResourceGathered(data.resourceType);
+        });
+
+        // Game State Integrations
+        this.eventBus.on('gameState:levelUp', (data: any) => {
+            console.log(`🎯 Level up! Now level ${data.newLevel || data}`);
+            
+            // Play level up particle effect at player position
+            const playerPosition = this.playerController.getPosition();
+            this.particleSystem.playEffect('levelup', playerPosition, 2);
+            
+            this.achievementSystem.trackLevelUp(data.newLevel || data);
+        });
+
+        // Magic System Integrations
+        this.eventBus.on('magic:spellDamage', (data: any) => {
+            // Find enemies in spell area and damage them
+            const enemies = this.enemySystem.getEnemiesInRange(data.position, data.area);
+            enemies.forEach(enemy => {
+                this.combatSystem.dealDamage(enemy.id, {
+                    amount: data.damage,
+                    type: 'magical',
+                    source: 'player',
+                    critical: Math.random() < 0.1 // 10% crit chance for spells
+                });
+            });
+        });
+
+        this.eventBus.on('magic:spellCastComplete', () => {
+            this.achievementSystem.trackSpellCast();
+        });
+
+        this.eventBus.on('magic:spellCastStart', (spell: any) => {
+            this.uiManager.showNotification(
+                `🔮 Casting ${spell.name}...`,
+                'info'
+            );
+        });
+
+        this.eventBus.on('magic:spellCastProgress', (data: any) => {
+            this.uiManager.updateCastingInfo(data.spell.name, data.progress * 100);
+        });
+
+        this.eventBus.on('magic:spellCastComplete', () => {
+            this.uiManager.hideCastingInfo();
+        });
+
+        this.eventBus.on('magic:spellCastCancelled', () => {
+            this.uiManager.hideCastingInfo();
+            this.uiManager.showNotification(
+                'Spell cancelled',
+                'warning'
+            );
+        });
+
+        this.eventBus.on('magic:statusEffectApplied', (data: any) => {
+            if (data.target === 'player' && data.effect.type === 'buff') {
+                this.uiManager.showNotification(
+                    `✨ ${data.effect.name} activated`,
+                    'success'
+                );
+            }
+        });
+
+        this.eventBus.on('magic:playerHealed', (amount: number) => {
+            this.uiManager.showNotification(
+                `💚 Healed for ${amount} health`,
+                'success'
+            );
+        });
+
+        // Achievement System Integrations
+        this.eventBus.on('achievement:rewardXP', (xp: number) => {
+            this.gameState.addExperience(xp);
+        });
+
+        this.eventBus.on('achievement:rewardGold', (gold: number) => {
+            // Add gold to inventory when currency system is implemented
+            console.log(`💰 Awarded ${gold} gold from achievement`);
+        });
+
+        this.eventBus.on('achievement:achievementUnlocked', (data: any) => {
+            // Show achievement notification
+            this.uiManager.showNotification(
+                `🏆 Achievement Unlocked: ${data.achievement.name}`,
+                'success'
+            );
+            
+            // Play achievement particle effect
+            const playerPosition = this.playerController.getPosition();
+            this.particleSystem.playEffect('levelup', playerPosition, 3);
+        });
+
+        console.log('🚌 EventBus integrations set up');
     }
     
     private setupPlayerCombatInput(): void {
@@ -248,31 +382,6 @@ export class Game {
                     this.magicSystem.cancelCurrentCast();
                     break;
             }
-        });
-    }
-    
-    private setupInteractionIntegration(): void {
-        this.interactionSystem.on('chestOpened', (data: any) => {
-            console.log(`🎯 Opened chest with ${data.items.length} items`);
-            
-            // Play treasure particle effect
-            this.particleSystem.playEffect('treasure', data.position, 1.5);
-        });
-        
-        this.interactionSystem.on('resourceHarvested', (data: any) => {
-            console.log(`🎯 Harvested ${data.resourceType}, ${data.remaining} remaining`);
-            
-            // Play hit effect for resource harvesting
-            this.particleSystem.playEffect('hit', data.position, 0.3);
-        });
-        
-        // Connect to game state events for level up effects
-        this.gameState.on('levelUp', (data: any) => {
-            console.log(`🎯 Level up! Now level ${data.newLevel}`);
-            
-            // Play level up particle effect at player position
-            const playerPosition = this.playerController.getPosition();
-            this.particleSystem.playEffect('levelup', playerPosition, 2);
         });
     }
     

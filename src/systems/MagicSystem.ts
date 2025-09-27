@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { GameState } from '@core/GameState';
 import { ParticleSystem } from '@systems/ParticleSystem';
+import { EventEmitter } from '@core/EventEmitter';
 
 export interface Spell {
     id: string;
@@ -48,7 +49,7 @@ export interface StatusEffect {
     };
 }
 
-export class MagicSystem {
+export class MagicSystem extends EventEmitter {
     private initialized: boolean = false;
     private gameState: GameState | null = null;
     private particleSystem: ParticleSystem | null = null;
@@ -56,13 +57,13 @@ export class MagicSystem {
     private spells: Map<string, Spell> = new Map();
     private playerStatusEffects: Map<string, StatusEffect> = new Map();
     private enemyStatusEffects: Map<string, Map<string, StatusEffect>> = new Map();
-    private eventListeners: { [event: string]: Function[] } = {};
     
     // Spell cooldowns and cast states
     private playerCooldowns: Map<string, number> = new Map();
     private currentCastSpell: ActiveSpell | null = null;
 
     constructor() {
+        super('magic');
         this.initializeSpells();
     }
 
@@ -450,32 +451,11 @@ export class MagicSystem {
         }
     }
 
-    // Event system
-    on(event: string, callback: Function): void {
-        if (!this.eventListeners[event]) {
-            this.eventListeners[event] = [];
-        }
-        this.eventListeners[event].push(callback);
-    }
-
-    off(event: string, callback: Function): void {
-        if (!this.eventListeners[event]) return;
-        const index = this.eventListeners[event].indexOf(callback);
-        if (index > -1) {
-            this.eventListeners[event].splice(index, 1);
-        }
-    }
-
-    private emit(event: string, data?: any): void {
-        if (!this.eventListeners[event]) return;
-        this.eventListeners[event].forEach(callback => callback(data));
-    }
-
     cleanup(): void {
         this.playerStatusEffects.clear();
         this.enemyStatusEffects.clear();
         this.playerCooldowns.clear();
         this.currentCastSpell = null;
-        this.eventListeners = {};
+        super.cleanup(); // Clear EventBus subscriptions
     }
 }
