@@ -271,6 +271,19 @@ export class BufferGeometry extends Geometry {
     this.attributes[name] = attribute;
     return this;
   }
+  
+  setIndex(_index: BufferAttribute | number[]): this {
+    // Mock implementation
+    return this;
+  }
+  
+  computeVertexNormals(): void {
+    // Mock implementation
+  }
+  
+  dispose(): void {
+    // Mock implementation
+  }
 }
 export class PlaneGeometry extends BufferGeometry {
   constructor(_width?: number, _height?: number) { super(); }
@@ -290,17 +303,58 @@ export class CylinderGeometry extends BufferGeometry {
 export class DodecahedronGeometry extends BufferGeometry {
   constructor(_radius?: number) { super(); }
 }
+export class ConeGeometry extends BufferGeometry {
+  constructor(_radius?: number, _height?: number, _segments?: number) { super(); }
+}
+export class TubeGeometry extends BufferGeometry {
+  constructor(_path?: any, _tubularSegments?: number, _radius?: number, _radialSegments?: number, _closed?: boolean) { super(); }
+}
+
+export class QuadraticBezierCurve3 {
+  constructor(_v0?: Vector3, _v1?: Vector3, _v2?: Vector3) {}
+}
+
+export class Color {
+  r = 1;
+  g = 1;
+  b = 1;
+  
+  constructor(color?: number) {
+    if (color !== undefined) {
+      this.setHex(color);
+    }
+  }
+  
+  setHex(value: number): this {
+    const r = (value >> 16) & 255;
+    const g = (value >> 8) & 255;
+    const b = value & 255;
+    this.r = r / 255;
+    this.g = g / 255;
+    this.b = b / 255;
+    return this;
+  }
+  
+  getHex(): number {
+    return (Math.round(this.r * 255) << 16) | (Math.round(this.g * 255) << 8) | Math.round(this.b * 255);
+  }
+}
 
 export class Material {
-  color?: { setHex: (value: number) => any };
+  color?: { setHex: (value: number) => any; getHex: () => number };
   
   constructor() {
     this.color = {
       setHex: vi.fn((value: number) => {
         (this.color as any)._value = value;
         return this.color;
-      })
+      }),
+      getHex: vi.fn(() => (this.color as any)._value || 0xffffff)
     };
+  }
+  
+  dispose(): void {
+    // Mock implementation
   }
 }
 export class MeshLambertMaterial extends Material {
@@ -316,6 +370,37 @@ export class MeshBasicMaterial extends Material {
     super();
     if (parameters?.color !== undefined && this.color) {
       this.color.setHex(parameters.color);
+    }
+  }
+}
+export class MeshStandardMaterial extends Material {
+  metalness: number = 0;
+  roughness: number = 1;
+  emissive: any;
+  emissiveIntensity: number = 0;
+  
+  constructor(parameters?: { 
+    color?: number;
+    metalness?: number;
+    roughness?: number;
+    emissive?: any;
+    emissiveIntensity?: number;
+  }) {
+    super();
+    if (parameters?.color !== undefined && this.color) {
+      this.color.setHex(parameters.color);
+    }
+    if (parameters?.metalness !== undefined) {
+      this.metalness = parameters.metalness;
+    }
+    if (parameters?.roughness !== undefined) {
+      this.roughness = parameters.roughness;
+    }
+    if (parameters?.emissive !== undefined) {
+      this.emissive = parameters.emissive;
+    }
+    if (parameters?.emissiveIntensity !== undefined) {
+      this.emissiveIntensity = parameters.emissiveIntensity;
     }
   }
 }
@@ -393,6 +478,7 @@ export class Light extends Object3D {
         this.color._value = value;
         return this.color;
       }),
+      getHex: vi.fn(() => this.color._value || 0xffffff),
       _value: color ?? 0xffffff
     };
   }
@@ -407,13 +493,59 @@ export class AmbientLight extends Light {
 
 export class DirectionalLight extends Light {
   shadow = {
-    mapSize: { width: 512, height: 512 }
+    mapSize: { width: 512, height: 512 },
+    camera: { 
+      near: 0.1, 
+      far: 200, 
+      left: -50, 
+      right: 50, 
+      top: 50, 
+      bottom: -50,
+      updateProjectionMatrix: vi.fn()
+    }
   };
+  target = { position: { set: vi.fn() } };
   castShadow = false;
 
   constructor(color?: number, intensity?: number) {
     super(color, intensity);
     // Color mock is already set up in the base Light class
+  }
+}
+
+export class PointLight extends Light {
+  distance: number;
+  decay: number;
+  shadow = {
+    mapSize: { width: 512, height: 512 },
+    camera: { near: 0.1, far: 50, updateProjectionMatrix: vi.fn() }
+  };
+  castShadow = false;
+
+  constructor(color?: number, intensity?: number, distance?: number, decay?: number) {
+    super(color, intensity);
+    this.distance = distance ?? 0;
+    this.decay = decay ?? 2;
+  }
+}
+
+export class SpotLight extends Light {
+  distance: number;
+  angle: number;
+  penumbra: number;
+  decay: number;
+  shadow = {
+    mapSize: { width: 512, height: 512 },
+    camera: { near: 0.1, far: 50, updateProjectionMatrix: vi.fn() }
+  };
+  castShadow = false;
+
+  constructor(color?: number, intensity?: number, distance?: number, angle?: number, penumbra?: number, decay?: number) {
+    super(color, intensity);
+    this.distance = distance ?? 0;
+    this.angle = angle ?? Math.PI / 3;
+    this.penumbra = penumbra ?? 0;
+    this.decay = decay ?? 2;
   }
 }
 
